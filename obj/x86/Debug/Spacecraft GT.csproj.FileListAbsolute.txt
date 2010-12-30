@@ -1,0 +1,12 @@
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\bin\Debug\Spacecraft GT.exe
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\bin\Debug\Spacecraft GT.pdb
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\bin\Debug\zlib.net.dll
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\obj\x86\Debug\Spacecraft GT.exe
+C:\Users\Corralx\Desktop\Minecraft\SpaceManiac-Spacecraft-GT-7411bcd\obj\x86\Debug\Spacecraft GT.pdb
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\Spacecraft GT.exe
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\Spacecraft GT.pdb
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\Spacecraft GT.exe
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\Spacecraft GT.pdb
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\zlib.net.dll
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\ResolveAssemblyReference.cache

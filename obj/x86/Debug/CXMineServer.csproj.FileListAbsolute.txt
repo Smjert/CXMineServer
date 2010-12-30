@@ -1,0 +1,6 @@
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\zlib.net.dll
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\CXMineServer.exe
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\bin\Debug\CXMineServer.pdb
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\CXMineServer.exe
+C:\Users\Corralx\Desktop\Minecraft\CXMineServer\obj\x86\Debug\CXMineServer.pdb
