@@ -8,67 +8,91 @@ using NBT;
 namespace CXMineServer
 {
 
-    public class Slot
-    {
-        private Inventory _Inventory;
-
-        private short count;
-        public short Count
-        {
-            get
-            {
-                return count;
-            }
-            set
-            {
-                count += value;
-                if (count > 64)
-                    count = 64;
-                // TODO: split object in new stack
-            }
-        }
-
-        private short id;
-        public short Id
-        {
-            get
-            {
-                return id;
-            }
-            set
-            {
-                id = value;
-            }
-        }
-
-        private short uses;
-        public short Uses
-        {
-            get
-            {
-                return uses;
-            }
-            set
-            {
-                uses -= value;
-                if (uses < 0)
-                    uses = 0;
-                // TODO: manage uses = 38, remove Item
-            }
-        }
-
-        private Slot() {}
-        public Slot(Inventory inv, short count = 0, short id = -1, short uses = 0)
-        {
-            _Inventory = inv;
-            this.count = count;
-            this.id = id;
-            this.uses = uses;
-        }
-    }
-
     public class Inventory
     {
+
+
+        // Private Nested Slot class
+        private class Slot
+        {
+            private Inventory _Inventory;
+
+            private int position;
+            public int Position
+            {
+                get
+                {
+                    return position;
+                }
+                set
+                {
+                    position = value;
+                }
+            }
+
+            private short count;
+            public short Count
+            {
+                get
+                {
+                    return count;
+                }
+                set
+                {
+                    count = value;
+                    if (count > (short)64)
+                    {
+                        _Inventory.SplitStackForSlot(position);
+                    }
+                        
+                    if (count == (short)0)
+                        _Inventory.ResetSlot(position);
+                }
+            }
+
+            private short id;
+            public short Id
+            {
+                get
+                {
+                    return id;
+                }
+                set
+                {
+                    id = value;
+                }
+            }
+
+            private short uses;
+            public short Uses
+            {
+                get
+                {
+                    return uses;
+                }
+                set
+                {
+                    uses = value;
+                    if (uses < 0)
+                        uses = 0;
+                    if (uses > 38)
+                        _Inventory.ResetSlot(position);
+                }
+            }
+
+            private Slot() { }
+            public Slot(Inventory inv, short count = 0, short id = -1, short uses = 0, int position = -1)
+            {
+                _Inventory = inv;
+                Count = count;
+                Id = id;
+                Uses = uses;
+                Position = position;
+            }
+        }
+
+
+
         private List<Slot> slotList;
 
         public Inventory()
@@ -80,23 +104,47 @@ namespace CXMineServer
 
         public int Add(short id)
         {
-            //
-            return 0;
+            int slot = GetFirstAvailableSlotFor(id);
+            if (slot == (short)-1)
+                return -1;
+            if (slotList[slot].Id == (short)-1)
+                AddToPosition(slot, id, 1, 0);
+            else
+                slotList[slot].Count += 1;
+            return slot;
         }
 
-        public void AddToPosition(short id, int position)
+        public void AddToPosition(int position, short id, short count, short uses)
         {
-            slotList[position] = new Slot(this, (short)0, id, (short)0);
+            slotList[position] = new Slot(this, count, id, uses, position);
         }
 
         public void Remove(int position, short id, int quantity = 1)
         {
-            //
+            slotList[position].Count -= 1;
         }
 
-        public Slot GetItem(int position)
+        public void ResetSlot(int position)
+        {
+            slotList[position] = new Slot(this);
+        }
+
+        public object GetItem(int position)
         {
             return slotList[position];
+        }
+
+        public void UseItem(short position)
+        {
+            slotList[position].Uses += 1;
+        }
+
+        public void SplitStackForSlot(int position)
+        {
+            int slot = GetFirstAvailableSlotFor(slotList[position].Id);
+            if (slot != -1)
+                slotList[slot] = new Slot(this, (short)(slotList[slot].Count + slotList[position].Count - 64), slotList[position].Id, slotList[slot].Uses, slot);
+            slotList[position].Count = 64;
         }
 
         public static short FileToGameSlot(int slot)
