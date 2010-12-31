@@ -44,9 +44,10 @@ namespace CXMineServer
                     {
                         _Inventory.SplitStackForSlot(position);
                     }
-                        
-                    if (count == (short)0)
+                    if (id != (short)-1 && count == (short)0)
+                    {
                         _Inventory.ResetSlot(position);
+                    }
                 }
             }
 
@@ -84,10 +85,10 @@ namespace CXMineServer
             public Slot(Inventory inv, short count = 0, short id = -1, short uses = 0, int position = -1)
             {
                 _Inventory = inv;
-                Count = count;
-                Id = id;
-                Uses = uses;
-                Position = position;
+                this.count = count;
+                this.id = id;
+                this.uses = uses;
+                this.position = position;
             }
         }
 
@@ -98,8 +99,9 @@ namespace CXMineServer
         public Inventory()
         {
             slotList = new List<Slot>(45);
+            CXMineServer.Log("Inventory Capacity: " + slotList.Capacity);
             for (int i = 0; i < slotList.Capacity; i++)
-                slotList[i] = new Slot(this);
+                slotList.Add(new Slot(this));
         }
 
         public int Add(short id)
@@ -108,7 +110,10 @@ namespace CXMineServer
             if (slot == (short)-1)
                 return -1;
             if (slotList[slot].Id == (short)-1)
+            {
+                CXMineServer.Log("Adding id " + id);
                 AddToPosition(slot, id, 1, 0);
+            }
             else
                 slotList[slot].Count += 1;
             return slot;
@@ -185,7 +190,8 @@ namespace CXMineServer
 		public List<Chunk> VisibleChunks;
 		public List<Entity> VisibleEntities;
 
-        private short[] inventory;
+        //private short[] inventory;
+        public Inventory inventory;
 
         private int eid;
         public int Eid
@@ -218,10 +224,14 @@ namespace CXMineServer
 			Z = CXMineServer.Server.World.SpawnZ + 0.5;
             Yaw = 0.0F;
             Pitch = 0.0F;
-            inventory = new short[45];
-            for (uint i = 0; i < inventory.Length; i++)
-                inventory[i] = (short)-1;
+            //inventory = new short[45];
+            CXMineServer.Log("Creating Inventory");
+            inventory = new Inventory();
+            CXMineServer.Log("Inventory Created");
+            //for (uint i = 0; i < inventory.Length; i++)
+            //    inventory[i] = (short)-1;
             loadPlayerData();
+            CXMineServer.Log("Inventory Loaded");
 			Update();
 			_Conn.Transmit(PacketType.SpawnPosition, (int)X, (int)Y, (int)Z);
 			_Conn.Transmit(PacketType.PlayerPositionLook, X, Y, Y, Z, Yaw, Pitch, (byte)1);
@@ -259,7 +269,8 @@ namespace CXMineServer
                 // Send inventory item to client
                 int slot = (int)((byte)_inventory[i]["Slot"].Payload);
                 short realSlot =  (short)(44 - slot - 1 + (9 - ((44 - slot) % 9)) - (44 - slot) % 9);
-                inventory[realSlot] = (short)_inventory[i]["id"].Payload;
+                //inventory[realSlot] = (short)_inventory[i]["id"].Payload;
+                inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload, (short)_inventory[i]["Count"].Payload, (short)_inventory[i]["Damage"].Payload);
                 // Converting from player's .dat inventory slot to game's inventory slot
                 _Conn.Transmit(PacketType.SetSlot, (byte)0, realSlot,
                                                    _inventory[i]["id"].Payload,
@@ -351,7 +362,7 @@ namespace CXMineServer
 		{
 			return "[Entity.Player " + EntityID + ": " + Username + "]";
 		}
-
+        /*
         public void AddToInventory(int position, short ID)
         {
             if (position < 0 || position > 44)
@@ -406,6 +417,6 @@ namespace CXMineServer
             return 0;
             // TODO: Invertire logica dell'altro metodo
         }
-		
+		*/
 	}
 }

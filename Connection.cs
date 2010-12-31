@@ -412,9 +412,10 @@ namespace CXMineServer
                         Transmit(PacketType.PickupSpawn, eid, (short)4, (byte)1, (int)packet[2] * 32 + 16, (int)((byte)packet[3]) * 32, (int)packet[4] * 32 + 16, (byte)0, (byte)0, (byte)0);
                         Transmit(PacketType.CollectItem, eid, _Player.Eid);
                         Transmit(PacketType.DestroyEntity, eid);
-                        int slot = _Player.GetSlotFor((short)4);
-                        _Player.AddToInventory(slot, (short)4);
-                        Transmit(PacketType.SetSlot, (byte)0, _Player.FileToGameSlot(slot), (short)4, (byte)1, (byte)1);
+                        //int slot = _Player.GetSlotFor((short)4);
+                        //_Player.AddToInventory(slot, (short)4);
+                        int slot = _Player.inventory.Add((short)4);
+                        Transmit(PacketType.SetSlot, (byte)0, Inventory.FileToGameSlot(slot), (short)4, (byte)1, (byte)1);
                     }
                     else if ((byte)packet[1] == (byte)4)
                     {
