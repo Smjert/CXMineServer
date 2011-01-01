@@ -316,12 +316,16 @@ namespace CXMineServer
 			// CXMineServer.Log("Packet received: " + type);
 			
 			switch(type) {
+                // Keep Alive packet's here just for coherence, simply sending back another Keep Alive packet
+                // packet[0]: 0x00
                 case PacketType.KeepAlive: {
                     CXMineServer.Log("Received Keep Alive Packet");
                     Transmit(PacketType.KeepAlive);
                     break;
                 }
 
+                // packet[0]: 0x02
+                // packet[1]: Username : string
 				case PacketType.Handshake: {
                     CXMineServer.Log("Received Handshake Packet");
 					_Player.Username = (string) packet[1];
@@ -329,6 +333,10 @@ namespace CXMineServer
 					break;
 				}
 
+                // packet[0]: 0x01
+                // packet[1]: Protocol Version : int
+                // packet[2]: Username : string
+                // packet[3]: Password : string
 				case PacketType.LoginDetails: {
                     CXMineServer.Log("Received Login Details Packet");
 					if ((int) packet[1] != CXMineServer.ProtocolVersion) {
@@ -341,8 +349,6 @@ namespace CXMineServer
 						break;
 					}
 					
-					// TODO: Implement name verification
-					
 					Transmit(PacketType.LoginDetails, _Player.EntityID,
 						CXMineServer.Server.Name, CXMineServer.Server.Motd,
 						/* World.Seed */ (long) 0, /* World.Dimension */ (byte) 0);
@@ -351,33 +357,54 @@ namespace CXMineServer
 					break;
 				}
 				
+                // packet[0]: 0x03
+                // packet[1]: Message : string
 				case PacketType.Message: {
                     CXMineServer.Log("Received Message Packet");
 					_Player.RecvMessage((string) packet[1]);
 					break;
 				}
 
+                // packet[0]: 0x05
+                // packet[1]: EID : int
+                // packet[2]: Slot : short
+                // packet[3]: Item ID : short (-1 for unequipped/hands)
                 case PacketType.PlayerInventory: {
                         CXMineServer.Log("Received Player Inventory Packet");
                         break;
                 }
 
+                // packet[0]: 0x07
+                // packet[1]: User : int
+                // packet[2]: Target : int
+                // packet[3]: Left-Click? : bool (1 for left click, 0 for right click)
 				case PacketType.InteractEntity: {
                     CXMineServer.Log("Received Interact Entity Packet");
 					// TODO: Handle InteractEntity
 					break;
 				}
+
+                // packet[0]: 0x09
 				case PacketType.Respawn: {
                     CXMineServer.Log("Received Respawn Packet");
 					// TODO: Handle Respawn
 					break;
 				}
 				
+                // packet[0]: 0x0A
+                // packet[1]: OnGround : bool
 				case PacketType.Player: {
                     //CXMineServer.Log("Received Player Packet");
 					// Ignore.
 					break;
 				}
+
+                // packet[0]: 0x0B
+                // packet[1]: X : double
+                // packet[2]: Y : double
+                // packet[3]: Stance : double
+                // packet[4]: Z : double
+                // packet[5]: OnGround : bool
 				case PacketType.PlayerPosition: {
                     //CXMineServer.Log("Received Player Position Packet");
 					_Player.X = (double)packet[1];
@@ -385,12 +412,26 @@ namespace CXMineServer
 					_Player.Z = (double)packet[4];
 					break;
 				}
+
+                // packet[0]: 0x0C
+                // packet[1]: Yaw : float
+                // packet[2]: Pitch : float
+                // packet[3]: OnGround : bool
 				case PacketType.PlayerLook: {
                     //CXMineServer.Log("Received Player Look Packet");
                     _Player.Yaw = (float)packet[1];
                     _Player.Pitch = (float)packet[2];
 					break;
 				}
+
+                // packet[0]: 0x0D
+                // packet[1]: X : double
+                // packet[2]: Stance : double
+                // packet[3]: Y : double
+                // packet[4]: Z : double
+                // packet[5]: Yaw : float
+                // packet[6]: Pitch : float
+                // packet[7]: OnGround : bool
 				case PacketType.PlayerPositionLook: {
                     //CXMineServer.Log("Received Player Position Look Packet");
 					// TODO: Handle PlayerPositionLook
@@ -402,6 +443,12 @@ namespace CXMineServer
 					break;
 				}
 
+                // packet[0]: 0x0E
+                // packet[1]: Status : byte (0 == Started Digging, 1 == Digging, 2 == Stopped Digging, 3 == Block broken, 4 == Drop item)
+                // packet[2]: X : int
+                // packet[3]: Y : byte
+                // packet[4]: Z : int
+                // packet[5]: Face : byte (0 == -Y, 1 == +Y, 2 == -Z, 3 == +Z, 4 == -X, 5 == +X)
                 case PacketType.PlayerDigging: {
                     CXMineServer.Log("Received Player Digging Packet");
                     if((byte)packet[1] == (byte)3) {
@@ -425,6 +472,14 @@ namespace CXMineServer
                     break;
                 }
 
+                // packet[0]: 0x0F
+                // packet[1]: X : int
+                // packet[2]: Y : byte
+                // packet[3]: Z : int
+                // packet[4]: Direction : byte (0 == -Y, 1 == +Y, 2 == -Z, 3 == +Z, 4 == -X, 5 == +X)
+                // packet[5]: Block/Item ID : short
+                // packet[6]: Amount : byte (of items in players hand)
+                // packet[7]: Damage : byte (uses of the item)
                 case PacketType.PlayerBlockPlace: {
                     CXMineServer.Log("Received Player Block Placement Packet");                
 
@@ -475,37 +530,66 @@ namespace CXMineServer
                     break;
                 }
 
+                // packet[0]: 0x10
+                // packet[1]: Slot ID : short
                 case PacketType.PlayerHolding: {
                         CXMineServer.Log("Received Player Hold Changed Packet");
                         break;
                 }
 
+                // packet[0]: 0x12
+                // packet[1]: EID : int
+                // packet[2]: Animate : byte (0 == No Animation, 1 == Swing Arm, 2 == Damage Animation, + Composition like 102)
                 case PacketType.ArmAnimation: {
                         CXMineServer.Log("Received Arm Animation Packet");
                         break;
                 }
 
+                // packet[0]: 0x15
+                // packet[1]: EID : int
+                // packet[2]: Item ID : short
+                // packet[3]: Count : short
+                // packet[4]: X : int
+                // packet[5]: Y : int
+                // packet[6]: Z : int
+                // packet[7]: Rotation : byte
+                // packet[8]: Pitch : byte
+                // packet[9]: Roll : byte
                 case PacketType.PickupSpawn: {
                         CXMineServer.Log("Received Pickup Spawn Packet");
                         break;
                 }
 
+                // packet[0]: 0x65
+                // packet[1]: Window ID : byte
                 case PacketType.CloseWindow: {
                         CXMineServer.Log("Received Close Window Packet");
                         break;
                 }
 
+                // packet[0]: 0x66
+                // packet[1]: Window ID : byte
+                // packet[2]: Slot : short
+                // packet[3]: Right-Click? : byte (1 for Right Click, 0 for left Click)
+                // packet[4]: Action Number : byte (An unique transaction number for the action)
+                // packet[5]: Item ID : short (-1 if unequipped/empty)
+                // if Item ID != -1 there are two more data
+                // packet[6]: Item Count : byte
+                // packet[7]: Item uses : byte
                 case PacketType.WindowClick: {
                         CXMineServer.Log("Received Window Click Packet");
                         Transmit(PacketType.Transaction, (byte)0, (short)12, (byte)0);
                         break;
                 }
 
+                // packet[0]: 0x6A
                 case PacketType.Transaction: {
                     CXMineServer.Log("Received Transaction Packet");
                     break;
                 }
 
+                // packet[0]: 0xFF
+                // packet[1]: Reason : string
                 case PacketType.Disconnect: {
                     CXMineServer.Log("Received Disconnect Packet");
 					Disconnect("Quitting");
