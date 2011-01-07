@@ -13,7 +13,7 @@ namespace CXMineServer
 
 
         // Private Nested Slot class
-        private class Slot
+        public class Slot
         {
             private Inventory _Inventory;
 
@@ -95,6 +95,7 @@ namespace CXMineServer
 
 
         private List<Slot> slotList;
+        public int holdingPos = 0;
 
         public Inventory()
         {
@@ -124,9 +125,9 @@ namespace CXMineServer
             slotList[position] = new Slot(this, count, id, uses, position);
         }
 
-        public void Remove(int position, short id, int quantity = 1)
+        public void Remove(int position, int quantity = 1)
         {
-            slotList[position].Count -= 1;
+            slotList[position].Count -= (short)quantity;
         }
 
         public void ResetSlot(int position)
@@ -134,7 +135,7 @@ namespace CXMineServer
             slotList[position] = new Slot(this);
         }
 
-        public object GetItem(int position)
+        public Slot GetItem(int position)
         {
             return slotList[position];
         }
@@ -190,16 +191,7 @@ namespace CXMineServer
 		public List<Chunk> VisibleChunks;
 		public List<Entity> VisibleEntities;
 
-        //private short[] inventory;
         public Inventory inventory;
-
-        private int eid;
-        public int Eid
-        {
-            get {
-                return eid;
-            }
-        }
 
         private const string playersPath = "players/";
 		
@@ -211,7 +203,6 @@ namespace CXMineServer
 			CurrentChunk = null;
 			VisibleChunks = new List<Chunk>();
 			VisibleEntities = new List<Entity>();
-            eid = CXMineServer.Server.getEID();
 		}
 		
 		public void Spawn()
@@ -224,12 +215,9 @@ namespace CXMineServer
 			Z = CXMineServer.Server.World.SpawnZ + 0.5;
             Yaw = 0.0F;
             Pitch = 0.0F;
-            //inventory = new short[45];
             CXMineServer.Log("Creating Inventory");
             inventory = new Inventory();
             CXMineServer.Log("Inventory Created");
-            //for (uint i = 0; i < inventory.Length; i++)
-            //    inventory[i] = (short)-1;
             loadPlayerData();
             CXMineServer.Log("Inventory Loaded");
 			Update();
@@ -269,8 +257,7 @@ namespace CXMineServer
                 // Send inventory item to client
                 int slot = (int)((byte)_inventory[i]["Slot"].Payload);
                 short realSlot =  (short)(44 - slot - 1 + (9 - ((44 - slot) % 9)) - (44 - slot) % 9);
-                //inventory[realSlot] = (short)_inventory[i]["id"].Payload;
-                inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload, (short)_inventory[i]["Count"].Payload, (short)_inventory[i]["Damage"].Payload);
+                inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload, (short)(byte)_inventory[i]["Count"].Payload, (short)_inventory[i]["Damage"].Payload);
                 // Converting from player's .dat inventory slot to game's inventory slot
                 _Conn.Transmit(PacketType.SetSlot, (byte)0, realSlot,
                                                    _inventory[i]["id"].Payload,
@@ -349,10 +336,11 @@ namespace CXMineServer
 			if (e == this) return;
 			
 			if (e is Player) {
-				Player p = (Player) e;
+                Player p = (Player) e;
+                CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on " + Username + "(" + EntityID + ") client");
 				_Conn.Transmit(PacketType.NamedEntitySpawn, p.EntityID,
 					p.Username, (int)p.X, (int)p.Y, (int)p.Z,
-					(byte)0, (byte)0, (short)1);
+					(byte)0, (byte)0, (short)p.inventory.holdingPos);
 			} else {
 				SendMessage(Color.Purple + "Spawning " + e);
 			}
@@ -362,61 +350,5 @@ namespace CXMineServer
 		{
 			return "[Entity.Player " + EntityID + ": " + Username + "]";
 		}
-        /*
-        public void AddToInventory(int position, short ID)
-        {
-            if (position < 0 || position > 44)
-            {
-                CXMineServer.Log("Error! Invalid Inventory Position");
-                return;
-            }
-            inventory[position] = ID;
-        }
-
-        public void RemoveFromInventoryA(short ID)
-        {
-            for (uint i = 0; i < inventory.Length; i++)
-            {
-                if (inventory[i] == ID)
-                {
-                    // TODO: Decrement
-                    // se uguale a 0, eliminare
-                }
-            }
-        }
-
-        public short GetInventoryItem(int position)
-        {
-            return inventory[position];
-        }
-
-        public int GetSlotFor(short ID)
-        {
-            for (short i = 0; i < inventory.Length; i++)
-            {
-                if (inventory[i] == ID)
-                    return i;
-            }
-
-            for (short i = 0; i < inventory.Length; i++)
-            {
-                if (inventory[i] == (short)-1)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        public short FileToGameSlot(int slot)
-        {
-            return (short)(44 - slot - 1 + (9 - ((44 - slot) % 9)) - (44 - slot) % 9);
-        }
-
-        public short GameToFileSlot(int slot)
-        {
-            return 0;
-            // TODO: Invertire logica dell'altro metodo
-        }
-		*/
 	}
 }

@@ -47,7 +47,18 @@ namespace CXMineServer
 		public void Transmit(PacketType type, params object[] args)
 		{
 			// CXMineServer.Log("Transmitting: " + type + "(" + (byte)type + ")");
-			string structure = (type == PacketType.Disconnect ? "bt" : PacketStructure.Data[(byte) type]);
+            string structure;
+            try
+            {
+                // Handle disconnect packet
+                structure = (type == PacketType.Disconnect ? "bt" : PacketStructure.Data[(byte)type]);
+                // Handle SetSlot packet
+                structure = ((type == PacketType.SetSlot && (short)args[2] == (short)-1) ? "bbss" : PacketStructure.Data[(byte)type]);
+            }
+            catch
+            {
+                return;
+            }
 			
 			Builder<Byte> packet = new Builder<Byte>();
 			packet.Append((byte) type);
@@ -160,10 +171,12 @@ namespace CXMineServer
 		
 		private void TransmitRaw(byte[] packet)
 		{
-			try {
+			try 
+            {
 				_Client.GetStream().Write(packet, 0, packet.Length);
 			}
-			catch (IOException) {
+			catch
+            {
 				_Client.Close();
 				if (_Player.Spawned) {
 					_Player.Despawn();
@@ -407,6 +420,15 @@ namespace CXMineServer
                 // packet[5]: OnGround : bool
 				case PacketType.PlayerPosition: {
                     //CXMineServer.Log("Received Player Position Packet");
+                    /*
+                    foreach (Player p in CXMineServer.Server.PlayerList)
+                    {
+                        if (p != _Player && p.VisibleEntities.Contains(_Player))
+                        {
+                            Transmit(PacketType.EntityRelativeMove, _Player.EntityID, (byte)((_Player.X - (double)packet[1]) / 32), (byte)((_Player.Y - (double)packet[2]) / 32), (byte)((_Player.Z - (double)packet[4]) / 32));
+                        }
+                    }
+                    */
 					_Player.X = (double)packet[1];
 					_Player.Y = (double)packet[2];
 					_Player.Z = (double)packet[4];
@@ -421,6 +443,24 @@ namespace CXMineServer
                     //CXMineServer.Log("Received Player Look Packet");
                     _Player.Yaw = (float)packet[1];
                     _Player.Pitch = (float)packet[2];
+                    /*
+                    float y = _Player.Yaw, p = _Player.Pitch;
+                    y %= 360;
+                    p %= 360;
+                    if (y < 0)
+                        y += 360;
+                    if (p < 0)
+                        p += 360;
+                    y = y * 255 / 359;
+                    p = p * 255 / 359;
+                    foreach (Player _p in CXMineServer.Server.PlayerList)
+                    {
+                        if (_p != _Player && _p.VisibleEntities.Contains(_Player))
+                        {
+                            Transmit(PacketType.EntityRelativeMove, _Player.EntityID, (byte)(y), (byte)(p));
+                        }
+                    }
+                    */
 					break;
 				}
 
@@ -435,11 +475,30 @@ namespace CXMineServer
 				case PacketType.PlayerPositionLook: {
                     //CXMineServer.Log("Received Player Position Look Packet");
 					// TODO: Handle PlayerPositionLook
+                    //byte xDiff = (byte)((_Player.X - (double)packet[1]) / 32), yDiff = (byte)((_Player.Y - (double)packet[3]) / 32), zDiff = (byte)((_Player.Z - (double)packet[4]) / 32);
 					_Player.X = (double) packet[1];
-					_Player.Y = (double) packet[2];
+					_Player.Y = (double) packet[3];
 					_Player.Z = (double) packet[4];
                     _Player.Yaw = (float)packet[5];
                     _Player.Pitch = (float)packet[6];
+                    /*
+                    float y = _Player.Yaw, p = _Player.Pitch;
+                    y %= 360;
+                    p %= 360;
+                    if (y < 0)
+                        y += 360;
+                    if (p < 0)
+                        p += 360;
+                    y = y * 255 / 359;
+                    p = p * 255 / 359;
+                    foreach (Player _p in CXMineServer.Server.PlayerList)
+                    {
+                        if (_p != _Player && _p.VisibleEntities.Contains(_Player))
+                        {
+                            Transmit(PacketType.EntityRelativeMove, _Player.EntityID, xDiff, yDiff, zDiff, (byte)(y), (byte)(p));
+                        }
+                    }
+                    */
 					break;
 				}
 
@@ -454,15 +513,46 @@ namespace CXMineServer
                     if((byte)packet[1] == (byte)3) {
                         // Block destroyed
                         CXMineServer.Log("Received Block Destroyed Packet");
-                        Transmit(PacketType.BlockChange, packet[2], packet[3], packet[4], (byte)Block.Air, (byte)0x00);
+                        // Get the chunk the player is digging in
+                        Chunk chunk = CXMineServer.Server.World.GetChunkAt((int)packet[2], (int)packet[4]);
+                        // Send the destroyed block to all the player currently seeing this chunk
+                        foreach (Player p in CXMineServer.Server.PlayerList)
+                        {
+                            foreach (Chunk c in p.VisibleChunks)
+                            {
+                                if (c.Equals(chunk))
+                                {
+                                    Transmit(PacketType.BlockChange, packet[2], packet[3], packet[4], (byte)Block.Air, (byte)0x00);
+                                    CXMineServer.Log("Transmitting Block Change to Player " + p.Username);
+                                }
+                            }
+                        }
+                        // Get a new EID for the spawn
                         int eid = CXMineServer.Server.getEID();
-                        Transmit(PacketType.PickupSpawn, eid, (short)4, (byte)1, (int)packet[2] * 32 + 16, (int)((byte)packet[3]) * 32, (int)packet[4] * 32 + 16, (byte)0, (byte)0, (byte)0);
-                        Transmit(PacketType.CollectItem, eid, _Player.Eid);
+                        // Get relative X and Z coordinate in the chunk
+                        int x = (int)packet[2] % 16, z = (int)packet[4] % 16;
+                        if (x < 0)
+                            x += 16;
+                        if (z < 0)
+                            z += 16;
+                        // Get the block data in the chunk
+                        Block block = chunk.GetBlock(x, (int)(byte)packet[3], z);
+                        // Update the chunk with the new block
+                        chunk.SetBlock(x, (int)(byte)packet[3], z, Block.Air);
+                        // Manage special spawn case where the destroyed block isn't the one to spawn
+                        if (block == Block.Grass)
+                            block = Block.Dirt;
+                        if (block == Block.Rock)
+                            block = Block.Cobblestone;
+                        // Spawn a new object to collect
+                        Transmit(PacketType.PickupSpawn, eid, (short)block, (byte)1, (int)packet[2] * 32 + 16, (int)((byte)packet[3]) * 32, (int)packet[4] * 32 + 16, (byte)0, (byte)0, (byte)0);
+                        // Collect the block instantly (TODO: Collect the block if near the player)
+                        Transmit(PacketType.CollectItem, eid, _Player.EntityID);
+                        // Destroy the entity beacuse it's collected
                         Transmit(PacketType.DestroyEntity, eid);
-                        //int slot = _Player.GetSlotFor((short)4);
-                        //_Player.AddToInventory(slot, (short)4);
-                        int slot = _Player.inventory.Add((short)4);
-                        Transmit(PacketType.SetSlot, (byte)0, Inventory.FileToGameSlot(slot), (short)4, (byte)1, (byte)1);
+                        // Update the inventory coherently
+                        int slot = _Player.inventory.Add((short)block);
+                        Transmit(PacketType.SetSlot, (byte)0, Inventory.FileToGameSlot(slot), (short)block, (byte)_Player.inventory.GetItem(slot).Count, (byte)0);
                     }
                     else if ((byte)packet[1] == (byte)4)
                     {
@@ -486,45 +576,88 @@ namespace CXMineServer
                     if ((short)packet[5] < (short)0) // Using hands to interact
                     {
                         CXMineServer.Log("Received Hand Interact Packet");
-                        Transmit(PacketType.OpenWindow, (byte)0, (byte)0, "Large chest", (byte)54);
+                        //Transmit(PacketType.OpenWindow, (byte)0, (byte)0, "Large chest", (byte)54);
                     }
                     else if ((short)packet[5] < (short)100) // using blocks
                     {
                         CXMineServer.Log("Received Block Placement Packet");
                         int x = (int)packet[1], z = (int)packet[3];
                         byte y = (byte)packet[2];
+                        // Getting direction info converted from packet to host type
+                        byte meta = MetaHtN((byte)packet[4]);
+                        // Calculate new block position based on old block position and direction
                         switch((byte)packet[4]) { // Direction
                             case (byte)0: { // -Y
+                                CXMineServer.Log("-Y");
                                 y -= 1;
                                 break;
                             }
                             case (byte)1: { // +Y
+                                CXMineServer.Log("+Y");
                                 y += 1;
                                 break;
                             }
                             case (byte)2: { // -Z
+                                CXMineServer.Log("-Z");
                                 z -= 1;
                                 break;
                             }
                             case (byte)3: { // +Z
+                                CXMineServer.Log("+Z");
                                 z += 1;
                                 break;
                             }
                             case (byte)4: { // -X
+                                CXMineServer.Log("-X");
                                 x -= 1;
                                 break;
                             }
                             case (byte)5: { // +X
+                                CXMineServer.Log("+X");
                                 x += 1;
                                 break;
                             }
                         }
-                        Transmit(PacketType.BlockChange, x, y, z, (byte)((short)packet[5]), (byte)0x00);
-                        // TODO: Decrementa il contatore degli oggetti
+                        // Calculate relative block position inside the chunk
+                        int _x = x % 16, _z = z % 16;
+                        if (_x < 0)
+                            _x += 16;
+                        if (_z < 0)
+                            _z += 16;
+                        // Special handling for torches (TODO: Handle every object, check the placement)
+                        if ((short)packet[5] == (short)Block.Torch && (byte)packet[4] == (byte)0)
+                        {
+                            // Rollback to the precedent situation if the placement is invalid
+                            Block block = CXMineServer.Server.World.GetChunkAt(x, z).GetBlock(_x, y, _z);
+                            byte data = MetaHtN(CXMineServer.Server.World.GetChunkAt(x, z).GetData(_x, y, _z));
+                            Transmit(PacketType.BlockChange, x, y, z, (byte)(short)block, data);
+                            return;
+                        }
+                        // Get the current chunk
+                        Chunk chunk = CXMineServer.Server.World.GetChunkAt(x, z);
+                        // For each player using that chunk, update the block data
+                        foreach (Player p in CXMineServer.Server.PlayerList)
+                        {
+                            foreach (Chunk c in p.VisibleChunks)
+                            {
+                                if (c.Equals(chunk))
+                                    Transmit(PacketType.BlockChange, x, y, z, (byte)(short)packet[5], meta);
+                            }
+                        }
+                        // Update the chunk's data on the server
+                        chunk.SetBlock(_x, y, _z, (Block)(byte)(short)packet[5]);
+                        // Decrement the inventory counter
+                        int pos = _Player.inventory.holdingPos;
+                        _Player.inventory.Remove(pos);
+                        // Handle Count == 0 and so ID == -1 (Needed by the different packet format)
+                        if (_Player.inventory.GetItem(pos).Id == -1)
+                            Transmit(PacketType.SetSlot, (byte)0, (short)pos, (short)-1);
+                        else
+                            Transmit(PacketType.SetSlot, (byte)0, (short)pos, _Player.inventory.GetItem(pos).Id, (byte)_Player.inventory.GetItem(pos).Count, (byte)_Player.inventory.GetItem(pos).Uses);
                     }
                     else // using items
                     {
-                        Transmit(PacketType.OpenWindow, (byte)0, (byte)0, "Large chest", (byte)54);
+                        //Transmit(PacketType.OpenWindow, (byte)0, (byte)0, "Large chest", (byte)54);
                     }
                     
                     break;
@@ -534,6 +667,7 @@ namespace CXMineServer
                 // packet[1]: Slot ID : short
                 case PacketType.PlayerHolding: {
                         CXMineServer.Log("Received Player Hold Changed Packet");
+                        _Player.inventory.holdingPos = (int)(short)packet[1];
                         break;
                 }
 
@@ -582,12 +716,6 @@ namespace CXMineServer
                         break;
                 }
 
-                // packet[0]: 0x6A
-                case PacketType.Transaction: {
-                    CXMineServer.Log("Received Transaction Packet");
-                    break;
-                }
-
                 // packet[0]: 0xFF
                 // packet[1]: Reason : string
                 case PacketType.Disconnect: {
@@ -597,5 +725,32 @@ namespace CXMineServer
 				}
 			}
 		}
+
+        private static byte MetaHtN(byte meta)
+        {
+            switch (meta)
+            {
+                case (byte)0:
+                    return (byte)5;
+
+                case (byte)1:
+                    return (byte)0;
+
+                case (byte)2:
+                    return (byte)4;
+
+                case (byte)3:
+                    return meta;
+
+                case (byte)4:
+                    return (byte)2;
+
+                case (byte)5:
+                    return (byte)1;
+
+                default:
+                    return (byte)0;
+            }
+        }
 	}
 }

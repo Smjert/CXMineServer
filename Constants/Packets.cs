@@ -9,9 +9,9 @@ namespace CXMineServer
 		Handshake = 0x02,           //   <->
 		Message = 0x03,             //   <->
 		TimeUpdate = 0x04,          //   <--
-		PlayerInventory = 0x05,     //   <->
+		PlayerInventory = 0x05,     //   -->
 		SpawnPosition = 0x06,       //   <--
-		InteractEntity = 0x07,		//   -->
+		InteractEntity = 0x07,		//   <->
 		UpdateHealth = 0x08,		//   <--
 		Respawn = 0x09,				//   <->
 		Player = 0x0A,              //   -->
@@ -53,7 +53,7 @@ namespace CXMineServer
         SetSlot = 0x67,             //   <--
         WindowItem = 0x68,          //   <--
         UpdateProgressBar = 0x69,   //   <--
-        Transaction = 0x6A,         //   -->
+        Transaction = 0x6A,         //   <--
         UpdateSign = 0x82,          //   <--
         Disconnect = 0xFF           //   <->
 

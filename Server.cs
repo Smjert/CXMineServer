@@ -72,6 +72,7 @@ namespace CXMineServer
 		{
 			MessageAll(Color.Announce + player.Username + " has left");
 			CXMineServer.Log(player.Username + " has left");
+            PlayerList.Remove(player);
 		}
 		
 		public void MessageAll(string message)
