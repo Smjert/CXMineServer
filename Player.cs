@@ -95,9 +95,9 @@ namespace CXMineServer
                 slotList.Add(new Slot(this));
         }
 
-        public int Add(short id)
+        public short Add(short id)
         {
-            int slot = GetFirstAvailableSlotFor(id);
+            short slot = GetFirstAvailableSlotFor(id);
             if (slot == (short)-1)
                 return -1;
             if (slotList[slot].Id == (short)-1)
@@ -143,34 +143,34 @@ namespace CXMineServer
             slotList[position].Count = 64;
         }
 
-        public static short FileToGameSlot(int slot)
+        public static short FileToGameSlot(short slot)
         {
 			if(slot<=8)
-				return slot+36;
+				return (short)(slot+36);
 			if(slot<=35)
 				return slot;
 			if(slot<=83)
-				return slot-79;
-			return 108-slot;
+				return (short)(slot-79);
+			return (short)(108-slot);
         }
 
-        public static short GameToFileSlot(int slot)
+        public static short GameToFileSlot(short slot)
         {
 			if(slot==0)
-				return 80; //HACK
+				return (short)80; //HACK
             if(slot<=4)
-				return slot+79;
+				return (short)(slot+79);
 			if(slot<=8)
-				return 108-slot;
+				return (short)(108-slot);
 			if(slot<=35)
 				return slot;
-			return slot-36;
+			return (short)(slot-36);
         }
 
-        private int GetFirstAvailableSlotFor(short id)
+        private short GetFirstAvailableSlotFor(short id)
         {
 			// TODO: non dovresti controllare che ci siano meno di 64 item nello slot?
-            for (int i = 0; i < slotList.Capacity; i++ )
+            for (short i = 0; i < slotList.Capacity; i++ )
             {
                 if (slotList[i].Id == id)
                     return i;
