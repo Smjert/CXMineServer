@@ -31,7 +31,7 @@ namespace CXMineServer
 		}
 		public int EntityID{get;private set;}
 		
-		public Entity()
+		protected Entity()
 		{
 			EntityID = Server.getEID();
 		}

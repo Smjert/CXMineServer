@@ -259,7 +259,7 @@ namespace CXMineServer
 					//CXMineServer.Log(player["Inventory"].CompoundToString("Inventory", ""));
 					for (uint i = 0; i < _inventory.Length; i++) {
 						// Send inventory item to client
-						int slot = (int)((byte)_inventory[i]["Slot"].Payload);
+						short slot = (short)((byte)_inventory[i]["Slot"].Payload);
 						short realSlot =  Inventory.FileToGameSlot(slot);
 						inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload,
 						                        (short)(byte)_inventory[i]["Count"].Payload,
