@@ -73,8 +73,8 @@ namespace CXMineServer
 			int i = filename.LastIndexOfAny(new char[] { '/', '\\', ':' });
 			Directory.CreateDirectory(filename.Substring(0, i));
 
-			using (StreamWriter rawWriter = new StreamWriter(filename)) {
-				using (GZipStream writer = new GZipStream(rawWriter.BaseStream, CompressionMode.Compress)) {
+			using (FileStream rawWriter = File.OpenRead(filename)) {
+				using (GZipStream writer = new GZipStream(rawWriter, CompressionMode.Compress)) {
 					NbtWriter.WriteTagStream(_Structure, writer);
 				}
 			}
@@ -83,8 +83,8 @@ namespace CXMineServer
 		public void Load()
 		{
 			try {
-				using (StreamReader rawReader = new StreamReader(CalculateFilename())) {
-					using (GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress)) {
+				using (StreamReader rawReader = File.OpenRead(CalculateFilename())) {
+					using (GZipStream reader = new GZipStream(rawReader, CompressionMode.Decompress)) {
 						_Structure = NbtParser.ParseTagStream(reader);
 					}
 				}
