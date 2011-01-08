@@ -53,9 +53,9 @@ namespace CXMineServer
 		
 		public Chunk GetChunk(int chunkX, int chunkZ)
 		{			
-			Builder<byte> b = new Builder<byte>();
-			b.Append(BitConverter.GetBytes(chunkX));
-			b.Append(BitConverter.GetBytes(chunkZ));
+			List<byte> b = new List<byte>();
+			b.AddRange(BitConverter.GetBytes(chunkX));
+			b.AddRange(BitConverter.GetBytes(chunkZ));
 			long index = BitConverter.ToInt64(b.ToArray(), 0);
 			if (_Chunks.ContainsKey(index)) {
 				return _Chunks[index];

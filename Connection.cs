@@ -60,8 +60,8 @@ namespace CXMineServer
                 return;
             }
 			
-			Builder<Byte> packet = new Builder<Byte>();
-			packet.Append((byte) type);
+			List<Byte> packet = new List<Byte>();
+			packet.Add((byte) type);
 			
 			byte[] bytes;
 			int current = 1;
@@ -70,45 +70,45 @@ namespace CXMineServer
 					current = i;
 					switch (structure[i]) {
 						case 'b':		// byte(1)
-							packet.Append((byte) args[i-1]);
+							packet.Add((byte) args[i-1]);
 							break;
 							
 						case 's':		// short(2)
-							packet.Append(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) args[i-1])));
+							packet.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) args[i-1])));
 							break;
 							
 						case 'f':		// float(4)
 							bytes = BitConverter.GetBytes((float) args[i-1]);
 							for (int j = 3; j >= 0; --j) {
-								packet.Append(bytes[j]);
+								packet.Add(bytes[j]);
 							}
 							//packet.Append(bytes);
 							break;
 							
 						case 'i':		// int(4)
-							packet.Append(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((int) args[i-1])));
+							packet.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((int) args[i-1])));
 							break;
 							
 						case 'd':		// double(8)
 							bytes = BitConverter.GetBytes((double) args[i-1]);
 							for (int j = 7; j >= 0; --j) {
-								packet.Append(bytes[j]);
+								packet.Add(bytes[j]);
 							}
 							//packet.Append(bytes);
 							break;
 							
 						case 'l':		// long(8)
-							packet.Append(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((long) args[i-1])));
+							packet.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((long) args[i-1])));
 							break;
 						
 						case 't':		// string
 							bytes = Encoding.UTF8.GetBytes((string) args[i-1]);
-							packet.Append(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) bytes.Length)));
-							packet.Append(bytes);
+							packet.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) bytes.Length)));
+							packet.AddRange(bytes);
 							break;
 						
 						case 'x':		// byte array
-							packet.Append((byte[]) args[i-1]);
+							packet.AddRange((byte[]) args[i-1]);
 							break;
 					}
 				}
