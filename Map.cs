@@ -41,11 +41,9 @@ namespace CXMineServer
 			string path = Path.Combine(WorldName, "level.dat");
 			if(File.Exists(path))
 			{
-				using (StreamReader rawReader = new StreamReader(path))
-				{
-					using (GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress))
-					{
-						_Structure = NbtParser.ParseTagStream(reader);
+				using(FileStream rawReader = File.OpenRead(path)) {
+					using(GZipStream reader = new GZipStream(rawReader, CompressionMode.Decompress)) {
+					_Structure = NbtParser.ParseTagStream(reader);
 					}
 				}
 			}
