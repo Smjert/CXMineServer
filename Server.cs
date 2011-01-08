@@ -40,7 +40,7 @@ namespace CXMineServer
 		public void Run()
 		{
 			World = new Map(WorldName);
-			if (!File.Exists(WorldName + "/level.dat")) {
+			if (!File.Exists(Path.Combine(WorldName, "level.dat"))) {
 				CXMineServer.Log("Generating world " + WorldName);
 				World.Generate();
 				World.ForceSave();
@@ -82,7 +82,7 @@ namespace CXMineServer
 			}
 		}
 
-        public int getEID()
+        public static int getEID()
         {
             return EID++;
         }

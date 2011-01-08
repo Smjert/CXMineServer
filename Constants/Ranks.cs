@@ -13,7 +13,7 @@ namespace CXMineServer {
 
 	public static class RankInfo
 	{
-		private static Dictionary<Rank, string> colors;
+		private static Dictionary<Rank, string> colors = new Dictionary<Rank, string>();
 
 		public static string RankColor(Rank rank)
 		{
@@ -30,7 +30,6 @@ namespace CXMineServer {
 
 		static RankInfo()
 		{
-			colors = new Dictionary<Rank, string>();
 			colors[Rank.Banned] = Color.Red;
 			colors[Rank.Guest] = Color.White;
 			colors[Rank.Builder] = Color.Green;

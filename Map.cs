@@ -18,11 +18,11 @@ namespace CXMineServer
 
         private const int visibleChunks = 6;
 		
-		public Map(string Name)
+		public Map(string name)
 		{
-			WorldName = Name;
+			WorldName = name;
 
-			using(StreamReader rawReader = new StreamReader(Path.Combine(Name, "level.dat"))) {
+			using(StreamReader rawReader = new StreamReader(Path.Combine(name, "level.dat"))) {
 				using(GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress)) {
 					_Structure = NbtParser.ParseTagStream(reader);
 				}
@@ -83,7 +83,7 @@ namespace CXMineServer
 			}
 		}
 		
-		public IEnumerable<Entity> EntitiesIn(Chunk c)
+		public static IEnumerable<Entity> EntitiesIn(Chunk c)
 		{
 			return c.Entities;
 		}

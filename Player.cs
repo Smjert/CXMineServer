@@ -314,9 +314,9 @@ namespace CXMineServer
 		private void SpawnEntity(Entity e)
 		{
 			if (e == this) return;
-			
-			if (e is Player) {
-                Player p = (Player) e;
+
+			Player p = e as Player;
+			if (p != null) {
                 CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on " + Username + "(" + EntityID + ") client");
 				_Conn.Transmit(PacketType.NamedEntitySpawn, p.EntityID,
 					p.Username, (int)p.X, (int)p.Y, (int)p.Z,

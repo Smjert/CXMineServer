@@ -144,7 +144,7 @@ namespace CXMineServer
 		// ====================
 		// Helper functions
 		
-		private int BlockIndex(int x, int y, int z)
+		private static int BlockIndex(int x, int y, int z)
 		{
 			return y + (z * 128 + (x * 128 * 16));
 		}
