@@ -18,12 +18,14 @@ namespace CXMineServer
 				CXMineServer.Log("Generating " + _CONFIG_FILENAME);
 				WriteDefaultConfig();
 			}
-			
-			StreamReader input = new StreamReader(_CONFIG_FILENAME);
-			string raw = input.ReadToEnd();
-			raw = raw.Replace("\r\n", "\n"); // Just in case we have to deal with silly Windows/UNIX line-endings.
-			string[] lines = raw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-			input.Close();
+
+			string[] lines;
+
+			using(StreamReader input = new StreamReader(_CONFIG_FILENAME)) {
+				string raw = input.ReadToEnd();
+				raw = raw.Replace("\r\n", "\n"); // Just in case we have to deal with silly Windows/UNIX line-endings.
+				lines = raw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+			}
 			
 			foreach (var line in lines) {
 				if (line[0] == '#')
@@ -38,16 +40,16 @@ namespace CXMineServer
 
 		private static void WriteDefaultConfig()
 		{
-			StreamWriter fh = new StreamWriter(_CONFIG_FILENAME);
-			fh.WriteLine("# CXMineServer default configuration file");
-			fh.WriteLine("# This file was auto-generated");
-			fh.WriteLine();
-			fh.WriteLine("port = 25565");
-			fh.WriteLine("server-name = Minecraft Server");
-			fh.WriteLine("motd = Powered by " + Color.Green + "CXMineServer");
-			fh.WriteLine("max-players = 16");
-			fh.WriteLine("verify-names = true");
-			fh.Close();
+			using(StreamWriter fh = new StreamWriter(_CONFIG_FILENAME)) {
+				fh.WriteLine("# CXMineServer default configuration file");
+				fh.WriteLine("# This file was auto-generated");
+				fh.WriteLine();
+				fh.WriteLine("port = 25565");
+				fh.WriteLine("server-name = Minecraft Server");
+				fh.WriteLine("motd = Powered by " + Color.Green + "CXMineServer");
+				fh.WriteLine("max-players = 16");
+				fh.WriteLine("verify-names = true");
+			}
 		}
 
 		public static string Get(string key, string def)

@@ -17,17 +17,10 @@ namespace CXMineServer
         {
             private Inventory _Inventory;
 
-            private int position;
             public int Position
             {
-                get
-                {
-                    return position;
-                }
-                set
-                {
-                    position = value;
-                }
+                get;
+                set;
             }
 
             private short count;
@@ -42,26 +35,19 @@ namespace CXMineServer
                     count = value;
                     if (count > (short)64)
                     {
-                        _Inventory.SplitStackForSlot(position);
+                        _Inventory.SplitStackForSlot(Position);
                     }
-                    if (id != (short)-1 && count == (short)0)
+                    if (Id != (short)-1 && count == (short)0)
                     {
-                        _Inventory.ResetSlot(position);
+                        _Inventory.ResetSlot(Position);
                     }
                 }
             }
 
-            private short id;
             public short Id
             {
-                get
-                {
-                    return id;
-                }
-                set
-                {
-                    id = value;
-                }
+                get;
+                set;
             }
 
             private short uses;
@@ -77,7 +63,7 @@ namespace CXMineServer
                     if (uses < 0)
                         uses = 0;
                     if (uses > 38)
-                        _Inventory.ResetSlot(position);
+                        _Inventory.ResetSlot(Position);
                 }
             }
 
@@ -86,9 +72,9 @@ namespace CXMineServer
             {
                 _Inventory = inv;
                 this.count = count;
-                this.id = id;
+                Id = id;
                 this.uses = uses;
-                this.position = position;
+                Position = position;
             }
         }
 
@@ -166,6 +152,7 @@ namespace CXMineServer
 
         private int GetFirstAvailableSlotFor(short id)
         {
+			// TODO: non dovresti controllare che ci siano meno di 64 item nello slot?
             for (int i = 0; i < slotList.Capacity; i++ )
             {
                 if (slotList[i].Id == id)
@@ -185,11 +172,11 @@ namespace CXMineServer
 	public class Player : Entity
 	{
 		private Connection _Conn;
-		public string Username;
+		public string Username = "";
 		public bool Spawned;
 		
-		public List<Chunk> VisibleChunks;
-		public List<Entity> VisibleEntities;
+		public List<Chunk> VisibleChunks = new List<Chunk>();
+		public List<Entity> VisibleEntities = new List<Entity>();
 
         public Inventory inventory;
 
@@ -198,11 +185,6 @@ namespace CXMineServer
 		public Player(TcpClient client)
 		{
 			_Conn = new Connection(client, this);
-			Username = "";
-			Spawned = false;
-			CurrentChunk = null;
-			VisibleChunks = new List<Chunk>();
-			VisibleEntities = new List<Entity>();
 		}
 		
 		public void Spawn()
@@ -239,8 +221,8 @@ namespace CXMineServer
                 File.Create(userPath);
                 return;
             }
-            StreamReader reader = new StreamReader(userPath);
-            GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress);
+            using(StreamReader reader = new StreamReader(userPath)) {
+            using(GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress)) {
             BinaryTag player = NbtParser.ParseTagStream(zipStream);
             //CXMineServer.Log(player.CompoundToString("Player", ""));
             _Conn.Transmit(PacketType.UpdateHealth, player["Health"].Payload);
@@ -264,8 +246,8 @@ namespace CXMineServer
                                                    _inventory[i]["Count"].Payload,
                                                    (byte)((short)_inventory[i]["Damage"].Payload));
             }
-
-            reader.Close();
+			}
+            }
         }
 
 		public void SendMessage(string message)
@@ -293,6 +275,7 @@ namespace CXMineServer
 						_Conn.Transmit(PacketType.PreChunk, c.ChunkX, c.ChunkZ, (byte) 0);
 					}
 				}
+
 				foreach (Chunk c in newVisibleChunks) {
 					if (!VisibleChunks.Contains(c)) {
 						_Conn.SendChunk(c);
