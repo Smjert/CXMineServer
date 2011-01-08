@@ -55,6 +55,7 @@ namespace CXMineServer
                 // Handle SetSlot packet
                 structure = ((type == PacketType.SetSlot && (short)args[2] == (short)-1) ? "bbss" : PacketStructure.Data[(byte)type]);
             }
+			//TODO: Catchare qualcosa di più specifico
             catch
             {
                 return;
@@ -175,6 +176,7 @@ namespace CXMineServer
             {
 				_Client.GetStream().Write(packet, 0, packet.Length);
 			}
+			//TODO: Catchare qualcosa di più specifico
 			catch
             {
 				_Client.Close();
@@ -310,11 +312,13 @@ namespace CXMineServer
 			Transmit(PacketType.PreChunk, chunk.ChunkX, chunk.ChunkZ, (byte) 1);
 			
 			byte[] uncompressed = chunk.GetBytes();
-			MemoryStream mem = new MemoryStream();
-			ZOutputStream stream = new ZOutputStream(mem, zlibConst.Z_BEST_COMPRESSION);
-			stream.Write(uncompressed, 0, uncompressed.Length);
-			stream.Close();
-			byte[] data = mem.ToArray();
+			byte[] data;
+			using(MemoryStream mem = new MemoryStream()) {
+				using(ZOutputStream stream = new ZOutputStream(mem, zlibConst.Z_BEST_COMPRESSION)) {
+					stream.Write(uncompressed, 0, uncompressed.Length);
+				}
+				data = mem.ToArray();
+			}
 			
 			Transmit(PacketType.MapChunk, 16 * chunk.ChunkX, (short) 0, 16 * chunk.ChunkZ,
 				(byte) 15, (byte) 127, (byte) 15, data.Length, data);

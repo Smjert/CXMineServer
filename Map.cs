@@ -8,7 +8,10 @@ namespace CXMineServer
 {
 	public class Map
 	{
-		public string WorldName;
+		public string WorldName{
+			get;
+			private set;
+		}
 
 		private Dictionary<long, Chunk> _Chunks = new Dictionary<long, Chunk>();
 		private BinaryTag _Structure;
