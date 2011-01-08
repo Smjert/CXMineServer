@@ -145,13 +145,26 @@ namespace CXMineServer
 
         public static short FileToGameSlot(int slot)
         {
-            return (short)(44 - slot - 1 + (9 - ((44 - slot) % 9)) - (44 - slot) % 9);
+			if(slot<=8)
+				return slot+36;
+			if(slot<=35)
+				return slot;
+			if(slot<=83)
+				return slot-79;
+			return 108-slot
         }
 
         public static short GameToFileSlot(int slot)
         {
-            return 0;
-            // TODO: Invertire logica dell'altro metodo
+			if(slot==0)
+				return 80; //HACK
+            if(slot<=4)
+				return slot+79;
+			if(slot<=8)
+				return 108-slot;
+			if(slot<=35)
+				return slot;
+			return slot-36;
         }
 
         private int GetFirstAvailableSlotFor(short id)
