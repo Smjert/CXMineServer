@@ -555,7 +555,7 @@ namespace CXMineServer
                         // Destroy the entity beacuse it's collected
                         Transmit(PacketType.DestroyEntity, eid);
                         // Update the inventory coherently
-                        int slot = _Player.inventory.Add((short)block);
+                        short slot = _Player.inventory.Add((short)block);
                         Transmit(PacketType.SetSlot, (byte)0, Inventory.FileToGameSlot(slot), (short)block, (byte)_Player.inventory.GetItem(slot).Count, (byte)0);
                     }
                     else if ((byte)packet[1] == (byte)4)

@@ -9,9 +9,18 @@ namespace CXMineServer
 {
 	public class Chunk
 	{
-		public int ChunkX;
-		public int ChunkZ;
-		public List<Entity> Entities = new List<Entity>();
+		public int ChunkX{
+			get;
+			private set;
+		}
+		public int ChunkZ{
+			get;
+			private set;
+		}
+		public List<Entity> Entities{
+			get;
+			private set;
+		}
 
 		private BinaryTag _Structure;
 		private Map _World;
@@ -21,6 +30,7 @@ namespace CXMineServer
 			ChunkX = chunkX;
 			ChunkZ = chunkZ;
 			_World = world;
+			Entities=new List<Entity>();
 			Load();
 		}
 		
