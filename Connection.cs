@@ -651,7 +651,7 @@ namespace CXMineServer
                         // Update the chunk's data on the server
                         chunk.SetBlock(_x, y, _z, (Block)(byte)(short)packet[5]);
                         // Decrement the inventory counter
-                        int pos = _Player.inventory.holdingPos;
+                        int pos = _Player.inventory.HoldingPos;
                         _Player.inventory.Remove(pos);
                         // Handle Count == 0 and so ID == -1 (Needed by the different packet format)
                         if (_Player.inventory.GetItem(pos).Id == -1)
@@ -671,7 +671,7 @@ namespace CXMineServer
                 // packet[1]: Slot ID : short
                 case PacketType.PlayerHolding: {
                         CXMineServer.Log("Received Player Hold Changed Packet");
-                        _Player.inventory.holdingPos = (int)(short)packet[1];
+                        _Player.inventory.HoldingPos = (int)(short)packet[1];
                         break;
                 }
 

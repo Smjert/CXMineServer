@@ -5,7 +5,10 @@ namespace CXMineServer
 	public abstract class Entity
 	{
 	
-		public Chunk CurrentChunk{get;private set;}
+		public Chunk CurrentChunk{
+			get;
+			protected set;
+		}
 		public double X{
 			get;
 			set;
