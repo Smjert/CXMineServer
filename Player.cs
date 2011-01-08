@@ -10,8 +10,6 @@ namespace CXMineServer
 
     public class Inventory
     {
-
-
         // Private Nested Slot class
         public class Slot
         {
@@ -77,8 +75,6 @@ namespace CXMineServer
                 Position = position;
             }
         }
-
-
 
         private List<Slot> slotList;
         public int HoldingPos{
@@ -330,7 +326,7 @@ namespace CXMineServer
                 CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on " + Username + "(" + EntityID + ") client");
 				_Conn.Transmit(PacketType.NamedEntitySpawn, p.EntityID,
 					p.Username, (int)p.X, (int)p.Y, (int)p.Z,
-					(byte)0, (byte)0, (short)p.inventory.holdingPos);
+					(byte)0, (byte)0, (short)p.inventory.HoldingPos);
 			} else {
 				SendMessage(Color.Purple + "Spawning " + e);
 			}
