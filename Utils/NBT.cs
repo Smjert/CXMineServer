@@ -23,7 +23,7 @@ namespace NBT
 
 	public class BinaryTag
 	{
-		public TagType _ListType;
+		public TagType ListType;
 		public TagType Type;
 		public string Name;
 		public object Payload;
@@ -234,7 +234,7 @@ namespace NBT
 					TagType type = (TagType) (byte) ReadTag(ByteStream, TagType.Byte).Payload;
 					int length = (int) ReadTag(ByteStream, TagType.Int).Payload;
 					BinaryTag[] list = new BinaryTag[length];
-					Tag._ListType = type;
+					Tag.ListType = type;
 					for (int i = 0; i < length; ++i) {
 						list[i] = ReadTag(ByteStream, type);
 					}
@@ -342,9 +342,9 @@ namespace NBT
 				case TagType.List: {
 					BinaryTag[] list = (BinaryTag[]) Tag.Payload;
 					if (list.Length > 0) {
-						Tag._ListType = list[0].Type;
+						Tag.ListType = list[0].Type;
 					}
-					WriteTag(new BinaryTag(TagType.Byte, (byte) Tag._ListType), ByteStream);
+					WriteTag(new BinaryTag(TagType.Byte, (byte) Tag.ListType), ByteStream);
 					WriteTag(new BinaryTag(TagType.Int, (int) list.Length), ByteStream);
 					for (int i = 0; i < list.Length; ++i) {
 						WriteTag(list[i], ByteStream);
