@@ -233,13 +233,13 @@ namespace CXMineServer
 		}
 
         private void loadPlayerData() {
-            if (!File.Exists(CXMineServer.Server.World.WorldName + "/" + playersPath + Username + ".dat"))
-            {
-                StreamWriter writer = new StreamWriter(CXMineServer.Server.World.WorldName + "/" + playersPath + Username + ".dat");
-                writer.Close();
+			string userPath=Path.Combine(CXMineServer.Server.World.WorldName,playersPath + Username + ".dat");
+            if (!File.Exists(userPath))
+			{
+                File.Create(userPath);
                 return;
             }
-            StreamReader reader = new StreamReader(CXMineServer.Server.World.WorldName + "/" + playersPath + Username + ".dat");
+            StreamReader reader = new StreamReader(userPath);
             GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress);
             BinaryTag player = NbtParser.ParseTagStream(zipStream);
             //CXMineServer.Log(player.CompoundToString("Player", ""));
@@ -285,10 +285,9 @@ namespace CXMineServer
 			
 			if (newChunk != CurrentChunk) {
 				List<Chunk> newVisibleChunks = new List<Chunk>();
-				
-				foreach (Chunk c in CXMineServer.Server.World.GetChunksInRange(newChunk)) {
-					newVisibleChunks.Add(c);
-				}
+
+				newVisibleChunks.AddRange(CXMineServer.Server.World.GetChunksInRange(newChunk));
+
 				foreach (Chunk c in VisibleChunks) {
 					if (!newVisibleChunks.Contains(c)) {
 						_Conn.Transmit(PacketType.PreChunk, c.ChunkX, c.ChunkZ, (byte) 0);
@@ -305,9 +304,7 @@ namespace CXMineServer
 			
 			List<Entity> newVisibleEntities = new List<Entity>();
 			foreach (Chunk c in VisibleChunks) {
-				foreach (Entity e in c.Entities) {
-					newVisibleEntities.Add(e);
-				}
+				newVisibleEntities.AddRange(c.Entities);
 			}
 			foreach (Entity e in VisibleEntities) {
 				if (!newVisibleEntities.Contains(e)) {

@@ -20,7 +20,7 @@ namespace CXMineServer
 			WorldName = Name;
 			_Chunks = new Dictionary<long, Chunk>();
 			
-			StreamReader rawReader = new StreamReader(Name + "/level.dat");
+			StreamReader rawReader = new StreamReader(Path.Combine(Name,"level.dat"));
 			GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress);
 			_Structure = NbtParser.ParseTagStream(reader);
 			reader.Close();
