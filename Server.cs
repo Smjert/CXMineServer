@@ -8,15 +8,47 @@ namespace CXMineServer
 {
 	public class Server
 	{
-		public int Port;
-		public bool Running;
-		public string WorldName;
-		public string Name;
-		public string Motd;
-		public string ServerHash;
+		public int Port{
+			get;
+			private set;
+		}
+
+		public bool Running{
+			get;
+			private set;
+		}
+
+		public string WorldName{
+			get;
+			private set;
+		}
+
+		public string Name{
+			get;
+			private set;
+		}
+
+		public string Motd{
+			get;
+			private set;
+		}
+
+		public string ServerHash{
+			get;
+			private set;
+		}
 		
-		public Map World;
-		public List<Player> PlayerList;
+		public Map World{
+			get;
+			private set;
+		}
+
+		private List<Player> playerList;
+		public IEnumerable<Player> PlayerList{
+			get{
+				return playerList;
+			}
+		}
 		
 		private TcpListener _Listener;
 
@@ -33,7 +65,7 @@ namespace CXMineServer
 			ServerHash = "-";
 			
 			World = null;
-			PlayerList = new List<Player>();
+			playerList = new List<Player>();
 			_Listener = new TcpListener(new IPEndPoint(IPAddress.Any, Port));
 		}
 		
@@ -72,7 +104,7 @@ namespace CXMineServer
 		{
 			MessageAll(Color.Announce + player.Username + " has left");
 			CXMineServer.Log(player.Username + " has left");
-            PlayerList.Remove(player);
+            playerList.Remove(player);
 		}
 		
 		public void MessageAll(string message)
@@ -92,7 +124,7 @@ namespace CXMineServer
 		
 		private void AcceptConnection(TcpClient client)
 		{
-			PlayerList.Add(new Player(client));
+			playerList.Add(new Player(client));
 		}
 	}
 }

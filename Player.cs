@@ -241,31 +241,32 @@ namespace CXMineServer
                 return;
             }
             using(StreamReader reader = new StreamReader(userPath)) {
-            using(GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress)) {
-            BinaryTag player = NbtParser.ParseTagStream(zipStream);
-            //CXMineServer.Log(player.CompoundToString("Player", ""));
-            _Conn.Transmit(PacketType.UpdateHealth, player["Health"].Payload);
-            X = (double)player["Pos"][0].Payload;
-            Y = (double)player["Pos"][1].Payload + 2;
-            Z = (double)player["Pos"][2].Payload;
-            Yaw = (float)player["Rotation"][0].Payload;
-            Pitch = (float)player["Rotation"][1].Payload;
+				using(GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress)) {
+					BinaryTag player = NbtParser.ParseTagStream(zipStream);
+					//CXMineServer.Log(player.CompoundToString("Player", ""));
+					_Conn.Transmit(PacketType.UpdateHealth, player["Health"].Payload);
+					X = (double)player["Pos"][0].Payload;
+					Y = (double)player["Pos"][1].Payload + 2;
+					Z = (double)player["Pos"][2].Payload;
+					Yaw = (float)player["Rotation"][0].Payload;
+					Pitch = (float)player["Rotation"][1].Payload;
 
-            BinaryTag[] _inventory = (BinaryTag[])player["Inventory"].Payload;
-            //CXMineServer.Log(player["Inventory"].CompoundToString("Inventory", ""));
-            for (uint i = 0; i < _inventory.Length; i++)
-            {
-                // Send inventory item to client
-                int slot = (int)((byte)_inventory[i]["Slot"].Payload);
-                short realSlot =  (short)(44 - slot - 1 + (9 - ((44 - slot) % 9)) - (44 - slot) % 9);
-                inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload, (short)(byte)_inventory[i]["Count"].Payload, (short)_inventory[i]["Damage"].Payload);
-                // Converting from player's .dat inventory slot to game's inventory slot
-                _Conn.Transmit(PacketType.SetSlot, (byte)0, realSlot,
-                                                   _inventory[i]["id"].Payload,
-                                                   _inventory[i]["Count"].Payload,
-                                                   (byte)((short)_inventory[i]["Damage"].Payload));
-            }
-			}
+					BinaryTag[] _inventory = (BinaryTag[])player["Inventory"].Payload;
+					//CXMineServer.Log(player["Inventory"].CompoundToString("Inventory", ""));
+					for (uint i = 0; i < _inventory.Length; i++) {
+						// Send inventory item to client
+						int slot = (int)((byte)_inventory[i]["Slot"].Payload);
+						short realSlot =  Inventory.FileToGameSlot(slot);
+						inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload,
+						                        (short)(byte)_inventory[i]["Count"].Payload,
+						                        (short)_inventory[i]["Damage"].Payload);
+						// Converting from player's .dat inventory slot to game's inventory slot
+						_Conn.Transmit(PacketType.SetSlot, (byte)0, realSlot,
+						               _inventory[i]["id"].Payload,
+						               _inventory[i]["Count"].Payload,
+						               (byte)((short)_inventory[i]["Damage"].Payload));
+					}
+				}
             }
         }
 
@@ -336,7 +337,8 @@ namespace CXMineServer
 
 			Player p = e as Player;
 			if (p != null) {
-                CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on " + Username + "(" + EntityID + ") client");
+                CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on "
+				                 + Username + "(" + EntityID + ") client");
 				_Conn.Transmit(PacketType.NamedEntitySpawn, p.EntityID,
 					p.Username, (int)p.X, (int)p.Y, (int)p.Z,
 					(byte)0, (byte)0, (short)p.inventory.HoldingPos);
