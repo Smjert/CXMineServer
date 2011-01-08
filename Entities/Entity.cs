@@ -5,17 +5,31 @@ namespace CXMineServer
 	public abstract class Entity
 	{
 	
-		public Chunk CurrentChunk;
-		public double X;
-		public double Y;
-		public double Z;
-        public float Yaw;
-        public float Pitch;
-		public int EntityID;
+		public Chunk CurrentChunk{get;private set;}
+		public double X{
+			get;
+			set;
+		}
+		public double Y{
+			get;
+			set;
+		}
+		public double Z{
+			get;
+			set;
+		}
+        public float Yaw{
+			get;
+			set;
+		}
+        public float Pitch{
+			get;
+			set;
+		}
+		public int EntityID{get;private set;}
 		
 		public Entity()
 		{
-			CurrentChunk = null;
 			EntityID = Server.getEID();
 		}
 		

@@ -81,10 +81,14 @@ namespace CXMineServer
 
 
         private List<Slot> slotList;
-        public int holdingPos = 0;
+        public int HoldingPos{
+			get;
+			set;
+		}
 
         public Inventory()
         {
+			HoldingPos=0;
             slotList = new List<Slot>(45);
             CXMineServer.Log("Inventory Capacity: " + slotList.Capacity);
             for (int i = 0; i < slotList.Capacity; i++)
