@@ -22,8 +22,8 @@ namespace CXMineServer
 		{
 			WorldName = name;
 
-			using(StreamReader rawReader = new StreamReader(Path.Combine(name, "level.dat"))) {
-				using(GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress)) {
+			using(FileStream rawReader = File.OpenRead(Path.Combine(name, "level.dat"))) {
+				using(GZipStream reader = new GZipStream(rawReader, CompressionMode.Decompress)) {
 					_Structure = NbtParser.ParseTagStream(reader);
 				}
 			}

@@ -72,7 +72,6 @@
     <Compile Include="Server.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="Chunk.cs" />
-    <Compile Include="Utils\Pair.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Entities\Entity.cs" />
