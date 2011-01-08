@@ -19,28 +19,32 @@ namespace CXMineServer
 				WriteDefaultConfig();
 			}
 
-			string[] lines;
-
-			using(StreamReader input = new StreamReader(_CONFIG_FILENAME)) {
-				string raw = input.ReadToEnd();
-				raw = raw.Replace("\r\n", "\n"); // Just in case we have to deal with silly Windows/UNIX line-endings.
-				lines = raw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+			string raw = "";
+			using (StreamReader input = new StreamReader(_CONFIG_FILENAME)) {
+				raw = input.ReadToEnd();
 			}
-			
+			raw = raw.Replace("\r\n", "\n"); // Just in case we have to deal with silly Windows/UNIX line-endings.
+			string[] lines = raw.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
 			foreach (var line in lines) {
-				if (line[0] == '#')
+				if (line.Trim()[0] == '#')
 					continue;
 				int pos = line.IndexOf("=");
-				string key = line.Substring(0, pos).Trim();
-				string val = line.Substring(pos + 1).Trim();
-				_Config[key] = val;
-				//CXMineServer.Log("Configging: " + key + "=" + val);
+				if (pos < 0) {
+					CXMineServer.Log("Invalid line in config file: " + line);
+				}
+				else {
+					string key = line.Substring(0, pos).Trim();
+					string val = line.Substring(pos + 1).Trim();
+					_Config[key] = val;
+					//CXMineServer.Log("Configging: " + key + "=" + val);
+				}
 			}
 		}
 
 		private static void WriteDefaultConfig()
 		{
-			using(StreamWriter fh = new StreamWriter(_CONFIG_FILENAME)) {
+			using (StreamWriter fh = new StreamWriter(_CONFIG_FILENAME)) {
 				fh.WriteLine("# CXMineServer default configuration file");
 				fh.WriteLine("# This file was auto-generated");
 				fh.WriteLine();
@@ -54,8 +58,8 @@ namespace CXMineServer
 
 		public static string Get(string key, string def)
 		{
-			if (Defined(key))
-				return (_Config[key]);
+			if (_Config.ContainsKey(key))
+				return _Config[key];
 			else
 				return def;
 		}
@@ -68,28 +72,20 @@ namespace CXMineServer
 
 		public static int GetInt(string key, int def)
 		{
-			string val = Get(key, null);
-			if (val == null)
-				return def;
-			else
-				return Convert.ToInt32(val);
+			string val = Get(key, def.ToString());
+			return Convert.ToInt32(val);
 		}
 
-		public static bool Defined(string key)
-		{
-			return _Config.ContainsKey(key);
-		}
-		
 		// helpers
 		public static bool StrIsTrue(string val)
 		{
 			val = val.ToLower().Trim();
-			return (val == "1" || val == "yes" || val == "true" || val == "on");
+			return val == "1" || val == "yes" || val == "true" || val == "on";
 		}
-		
+
 		public static string OnOffStr(bool val)
 		{
-			return (val ? "On" : "Off");
+			return val ? "On" : "Off";
 		}
 	}
 }
