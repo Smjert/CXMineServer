@@ -34,6 +34,8 @@ namespace CXMineServer
 			}
 			
 			Log("Bye!");
+
+			Console.ReadLine();
 		}
 		
 		public static void Log(string message)

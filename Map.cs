@@ -21,12 +21,6 @@ namespace CXMineServer
 		public Map(string name)
 		{
 			WorldName = name;
-
-			using(StreamReader rawReader = new StreamReader(Path.Combine(name, "level.dat"))) {
-				using(GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress)) {
-					_Structure = NbtParser.ParseTagStream(reader);
-				}
-			}
 		}
 		
 		#region Properties
@@ -41,6 +35,28 @@ namespace CXMineServer
 							set { _Structure["Data"]["Time"].Payload = value; } }
 		
 		#endregion
+
+		public bool LoadLevel()
+		{
+			string path = Path.Combine(WorldName, "level.dat");
+			if(File.Exists(path))
+			{
+				using (StreamReader rawReader = new StreamReader(path))
+				{
+					using (GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress))
+					{
+						_Structure = NbtParser.ParseTagStream(reader);
+					}
+				}
+			}
+			else
+			{
+				CXMineServer.Log("Missing level.dat file, the world cannot start");
+				return false;
+			}
+
+			return true;
+		}
 		
 		public void Generate()
 		{

@@ -72,10 +72,13 @@ namespace CXMineServer
 		public void Run()
 		{
 			World = new Map(WorldName);
-			if (!File.Exists(Path.Combine(WorldName, "level.dat"))) {
-				CXMineServer.Log("Generating world " + WorldName);
+
+			if (!World.LoadLevel()) {
+				// The generation is missing
+				/*CXMineServer.Log("Generating world " + WorldName);
 				World.Generate();
-				World.ForceSave();
+				World.ForceSave();*/
+				return;
 			}
 			
 			_Listener.Start();
@@ -112,6 +115,11 @@ namespace CXMineServer
 			foreach(Player p in PlayerList) {
 				p.SendMessage(message);
 			}
+		}
+
+		public void Quit()
+		{
+			Running = false;
 		}
 
         public static int getEID()

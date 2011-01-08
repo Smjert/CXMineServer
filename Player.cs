@@ -282,6 +282,16 @@ namespace CXMineServer
 		
 		public void RecvMessage(string message)
 		{
+			if(message == "/save")
+			{
+				CXMineServer.Server.World.ForceSave();
+				return;
+			}
+			else if(message == "/quit")
+			{
+				CXMineServer.Server.Quit();
+				return;
+			}
 			CXMineServer.Log("<" + Username + "> " + message);
 			CXMineServer.Server.MessageAll("<" + Username + "> " + message);
 		}
