@@ -532,7 +532,7 @@ namespace CXMineServer
                             }
                         }
                         // Get a new EID for the spawn
-                        int eid = CXMineServer.Server.getEID();
+                        int eid = Server.getEID();
                         // Get relative X and Z coordinate in the chunk
                         int x = (int)packet[2] % 16, z = (int)packet[4] % 16;
                         if (x < 0)

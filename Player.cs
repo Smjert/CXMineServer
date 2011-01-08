@@ -175,8 +175,14 @@ namespace CXMineServer
 		public string Username = "";
 		public bool Spawned;
 		
-		public List<Chunk> VisibleChunks = new List<Chunk>();
-		public List<Entity> VisibleEntities = new List<Entity>();
+		private List<Chunk> visibleChunks = new List<Chunk>();
+		public IEnumerable<Chunk> VisibleChunks{
+			get{
+				return visibleChunks;
+			}
+		}
+
+		private List<Entity> VisibleEntities = new List<Entity>();
 
         public Inventory inventory;
 
@@ -277,12 +283,12 @@ namespace CXMineServer
 				}
 
 				foreach (Chunk c in newVisibleChunks) {
-					if (!VisibleChunks.Contains(c)) {
+					if (!visibleChunks.Contains(c)) {
 						_Conn.SendChunk(c);
 					}
 				}
 				
-				VisibleChunks = newVisibleChunks;
+				visibleChunks = newVisibleChunks;
 			}
 			
 			List<Entity> newVisibleEntities = new List<Entity>();

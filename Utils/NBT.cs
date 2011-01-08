@@ -74,10 +74,10 @@ namespace NBT
             }
         }
 		
-		private string NameString (string name)
+		private static string NameString (string name)
 		{
-			if (name == "") {
-				return "";
+			if (name.Length==0) {
+				return string.Empty;
 			} else {
 				return "(\"" + name + "\")";
 			}

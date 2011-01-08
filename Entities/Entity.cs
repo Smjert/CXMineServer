@@ -16,7 +16,7 @@ namespace CXMineServer
 		public Entity()
 		{
 			CurrentChunk = null;
-			EntityID = CXMineServer.Server.getEID();
+			EntityID = Server.getEID();
 		}
 		
 		virtual public void Update()

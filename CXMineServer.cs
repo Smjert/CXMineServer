@@ -8,8 +8,9 @@ namespace CXMineServer
 	public static class CXMineServer
 	{
 		public const int ProtocolVersion = 8;
-		
-		public static Random Random;
+
+		//TODO: a che serve?
+		//private static Random Random;
 		public static Server Server;
 		
 		public static void Main(string[] args)
@@ -18,11 +19,11 @@ namespace CXMineServer
 			
 			Configuration.Load();
 			
-			if (Configuration.Defined("random-seed")) {
+			/*if (Configuration.Defined("random-seed")) {
 				Random = new Random(Configuration.GetInt("random-seed", 0));
 			} else {
 				Random = new Random();
-			}
+			}*/
 			
 			Server = new Server();
 			try {
