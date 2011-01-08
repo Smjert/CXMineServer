@@ -72,21 +72,22 @@ namespace CXMineServer
 			string filename = CalculateFilename();
 			int i = filename.LastIndexOfAny(new char[] { '/', '\\', ':' });
 			Directory.CreateDirectory(filename.Substring(0, i));
-			
-			StreamWriter rawWriter = new StreamWriter(filename);
-			GZipStream writer = new GZipStream(rawWriter.BaseStream, CompressionMode.Compress);
-			NbtWriter.WriteTagStream(_Structure, writer);
-			writer.Close();
+
+			using (StreamWriter rawWriter = new StreamWriter(filename)) {
+				using (GZipStream writer = new GZipStream(rawWriter.BaseStream, CompressionMode.Compress)) {
+					NbtWriter.WriteTagStream(_Structure, writer);
+				}
+			}
 		}
 		
 		public void Load()
 		{
 			try {
-				StreamReader rawReader = new StreamReader(CalculateFilename());
-				GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress);
-				_Structure = NbtParser.ParseTagStream(reader);
-				reader.Close();
-				rawReader.Close();
+				using (StreamReader rawReader = new StreamReader(CalculateFilename())) {
+					using (GZipStream reader = new GZipStream(rawReader.BaseStream, CompressionMode.Decompress)) {
+						_Structure = NbtParser.ParseTagStream(reader);
+					}
+				}
                 //CXMineServer.Log(_Structure.CompoundToString("structure", ""));
 			}
 			catch (FileNotFoundException) {

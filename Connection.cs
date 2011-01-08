@@ -1,13 +1,12 @@
 using System;
-using System.Net.Sockets;
-using System.Threading;
 using System.Collections.Generic;
-using System.Net;
-using System.Text;
-using System.IO.Compression;
-using System.IO;
-using zlib;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using zlib;
 
 namespace CXMineServer
 {
@@ -51,9 +50,18 @@ namespace CXMineServer
             try
             {
                 // Handle disconnect packet
-                structure = (type == PacketType.Disconnect ? "bt" : PacketStructure.Data[(byte)type]);
-                // Handle SetSlot packet
-                structure = ((type == PacketType.SetSlot && (short)args[2] == (short)-1) ? "bbss" : PacketStructure.Data[(byte)type]);
+				if (type == PacketType.Disconnect) {
+					structure = "bt";
+				}
+				else {
+					// Handle SetSlot packet
+					if (type == PacketType.SetSlot && (short)args[2] == (short)-1) {
+						structure = "bbss";
+					}
+					else {
+						structure = PacketStructure.Data[(byte)type];
+					}
+				}
             }
 			//TODO: Catchare qualcosa di più specifico
             catch
@@ -208,8 +216,8 @@ namespace CXMineServer
 			buffer = null;
 			
 			while (_Buffer.Length > 0) {
-				Pair<int, object[]> pair = CheckCompletePacket();
-				int length = pair.First;
+				Packet pair = CheckCompletePacket();
+				int length = pair.Length;
 				if (length > 0) {
 					//byte[] packet = new byte[length];
 					//Array.Copy(_Buffer, packet, length);
@@ -218,24 +226,22 @@ namespace CXMineServer
 					Array.Copy(_Buffer, length, newBuffer, 0, _Buffer.Length - length);
 					_Buffer = newBuffer;
 					
-					ProcessPacket(pair.Second);
+					ProcessPacket(pair.Values);
 				} else {
 					break;
 				}
 			}
 		}
 		
-		private Pair<int, object[]> CheckCompletePacket()
+		private Packet CheckCompletePacket()
 		{
-			Pair<int, object[]> nPair = new Pair<int, object[]>(0, null);
-			
 			PacketType type = (PacketType) _Buffer[0];
 			if (type == PacketType.PlayerInventory) {
 				CXMineServer.Log("Someone sent an inventory! :V");
 			}
 			if (_Buffer[0] >= PacketStructure.Data.Length && _Buffer[0] != 0xFF) {
 				CXMineServer.Log("Got invalid packet: " + (byte)_Buffer[0]);
-				return nPair;
+				return new Packet();
 			} 
 			
             // special handling for the Disconnect case
@@ -250,19 +256,19 @@ namespace CXMineServer
 			for (int i = 0; i < structure.Length; ++i) {
 				switch (structure[i]) {
 					case 'b':		// byte(1)
-						if ((bufPos + 1) > _Buffer.Length) return nPair;
+						if ((bufPos + 1) > _Buffer.Length) return new Packet();
 						data.Add((byte) _Buffer[bufPos]);
 						bufPos += 1;
 						break;
 					
 					case 's':		// short(2)
-						if ((bufPos + 2) > _Buffer.Length) return nPair;
+						if ((bufPos + 2) > _Buffer.Length) return new Packet();
 						data.Add((short) IPAddress.NetworkToHostOrder(BitConverter.ToInt16(_Buffer, bufPos)));
 						bufPos += 2;
 						break;
 					
 					case 'f':		// float(4)
-						if ((bufPos + 4) > _Buffer.Length) return nPair;
+						if ((bufPos + 4) > _Buffer.Length) return new Packet();
 						for (int j = 0; j < 4; ++j) {
 							bytes[i] = _Buffer[bufPos + 3 - j];
 						}
@@ -270,13 +276,13 @@ namespace CXMineServer
 						bufPos += 4;
 						break;
 					case 'i':		// int(4)
-						if ((bufPos + 4) > _Buffer.Length) return nPair;
+						if ((bufPos + 4) > _Buffer.Length) return new Packet();
 						data.Add((int) IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_Buffer, bufPos)));
 						bufPos += 4;
 						break;
 					
 					case 'd':		// double(8)
-						if ((bufPos + 8) > _Buffer.Length) return nPair;
+						if ((bufPos + 8) > _Buffer.Length) return new Packet();
 						for (int j = 0; j < 8; ++j) {
 							bytes[j] = _Buffer[bufPos + 7 - j];
 						}
@@ -284,27 +290,27 @@ namespace CXMineServer
 						bufPos += 8;
 						break;
 					case 'l':		// long(8)
-						if ((bufPos + 8) > _Buffer.Length) return nPair;
+						if ((bufPos + 8) > _Buffer.Length) return new Packet();
 						data.Add((long) IPAddress.NetworkToHostOrder(BitConverter.ToInt64(_Buffer, bufPos)));
 						bufPos += 8;
 						break;
 					
 					case 't':		// string
-                        if ((bufPos + 2) > _Buffer.Length) return nPair;
+                        if ((bufPos + 2) > _Buffer.Length) return new Packet();
                         int len = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(_Buffer, bufPos));
-                        if ((bufPos + 2 + len) > _Buffer.Length) return nPair;
+						if ((bufPos + 2 + len) > _Buffer.Length) return new Packet();
                         data.Add((string)Encoding.UTF8.GetString(_Buffer, bufPos + 2, len));
                         bufPos += (2 + len);
 						break;
 					
 					case 'x':		// onos!
 						// TODO
-						return nPair;
+						return new Packet();
 						//break;
 				}
 			}
 			
-			return new Pair<int, object[]>(bufPos, data.ToArray());
+			return new Packet(bufPos, data.ToArray());
 		}
 		
 		public void SendChunk(Chunk chunk)

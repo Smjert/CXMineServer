@@ -66,6 +66,7 @@
     <Compile Include="Constants\Packets.cs" />
     <Compile Include="Constants\Ranks.cs" />
     <Compile Include="NetState.cs" />
+    <Compile Include="Packet.cs" />
     <Compile Include="Utils\Configuration.cs" />
     <Compile Include="Utils\NBT.cs" />
     <Compile Include="Server.cs" />
