@@ -7,11 +7,8 @@ using NBT;
 
 namespace CXMineServer
 {
-
     public class Inventory
     {
-
-
         // Private Nested Slot class
         public class Slot
         {
@@ -77,8 +74,6 @@ namespace CXMineServer
                 Position = position;
             }
         }
-
-
 
         private List<Slot> slotList;
         public int HoldingPos{
@@ -188,7 +183,7 @@ namespace CXMineServer
 
 	public class Player : Entity
 	{
-		private Connection _Conn;
+		private NetState _State;
 		public string Username = "";
 		public bool Spawned;
 		
@@ -199,15 +194,20 @@ namespace CXMineServer
 			}
 		}
 
+		public NetState State
+		{
+			get{ return _State; }
+			set{ _State = value; }
+		}
+
 		private List<Entity> VisibleEntities = new List<Entity>();
 
         public Inventory inventory;
 
         private const string playersPath = "players/";
 		
-		public Player(TcpClient client)
+		public Player()
 		{
-			_Conn = new Connection(client, this);
 		}
 		
 		public void Spawn()
@@ -226,8 +226,8 @@ namespace CXMineServer
             loadPlayerData();
             CXMineServer.Log("Inventory Loaded");
 			Update();
-			_Conn.Transmit(PacketType.SpawnPosition, (int)X, (int)Y, (int)Z);
-			_Conn.Transmit(PacketType.PlayerPositionLook, X, Y, Y, Z, Yaw, Pitch, (byte)1);
+			_State.SpawnPosition((int)X, (int)Y, (int)Z);
+			_State.PlayerPositionLook(X, Y, Z, Yaw, Pitch, 1);
 		}
 		
 		public void Despawn()
@@ -248,7 +248,8 @@ namespace CXMineServer
 				using(GZipStream zipStream = new GZipStream(reader.BaseStream, CompressionMode.Decompress)) {
 					BinaryTag player = NbtParser.ParseTagStream(zipStream);
 					//CXMineServer.Log(player.CompoundToString("Player", ""));
-					_Conn.Transmit(PacketType.UpdateHealth, player["Health"].Payload);
+					State.UpdateHealth(player["Health"].Payload);
+
 					X = (double)player["Pos"][0].Payload;
 					Y = (double)player["Pos"][1].Payload + 2;
 					Z = (double)player["Pos"][2].Payload;
@@ -265,7 +266,7 @@ namespace CXMineServer
 						                        (short)(byte)_inventory[i]["Count"].Payload,
 						                        (short)_inventory[i]["Damage"].Payload);
 						// Converting from player's .dat inventory slot to game's inventory slot
-						_Conn.Transmit(PacketType.SetSlot, (byte)0, realSlot,
+						_State.SetSlot((byte)0, realSlot,
 						               _inventory[i]["id"].Payload,
 						               _inventory[i]["Count"].Payload,
 						               (byte)((short)_inventory[i]["Damage"].Payload));
@@ -276,7 +277,7 @@ namespace CXMineServer
 
 		public void SendMessage(string message)
 		{
-			_Conn.Transmit(PacketType.Message, message);
+			_State.Message(message);
 		}
 		
 		public void RecvMessage(string message)
@@ -296,13 +297,13 @@ namespace CXMineServer
 
 				foreach (Chunk c in VisibleChunks) {
 					if (!newVisibleChunks.Contains(c)) {
-						_Conn.Transmit(PacketType.PreChunk, c.ChunkX, c.ChunkZ, (byte) 0);
+						_State.PreChunk(c.ChunkX, c.ChunkZ, 0);
 					}
 				}
 
 				foreach (Chunk c in newVisibleChunks) {
 					if (!visibleChunks.Contains(c)) {
-						_Conn.SendChunk(c);
+						_State.SendChunk(c);
 					}
 				}
 				
@@ -325,25 +326,27 @@ namespace CXMineServer
 			}
 			VisibleEntities = newVisibleEntities;
 			
-			_Conn.Transmit(PacketType.TimeUpdate, CXMineServer.Server.World.Time);
+			_State.TimeUpdate(CXMineServer.Server.World.Time);
 			base.Update();
 		}
 		
 		private void DespawnEntity(Entity e)
 		{
+			// If this function doesn't work on itself... then it must be static or put out of here
 			if (e == this) return;
-			_Conn.Transmit(PacketType.DestroyEntity, e.EntityID);
+			_State.DestroyEntity(e.EntityID);
 		}
 		
 		private void SpawnEntity(Entity e)
 		{
+			// If this function doesn't work on itself... then it must be static or put out of here
 			if (e == this) return;
 
 			Player p = e as Player;
 			if (p != null) {
                 CXMineServer.Log("Spawning Entity " + p.Username + "(" + p.EntityID + ") on "
 				                 + Username + "(" + EntityID + ") client");
-				_Conn.Transmit(PacketType.NamedEntitySpawn, p.EntityID,
+				_State.NamedEntitySpawn(p.EntityID,
 					p.Username, (int)p.X, (int)p.Y, (int)p.Z,
 					(byte)0, (byte)0, (short)p.inventory.HoldingPos);
 			} else {

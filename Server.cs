@@ -124,7 +124,10 @@ namespace CXMineServer
 		
 		private void AcceptConnection(TcpClient client)
 		{
-			playerList.Add(new Player(client));
+			Player newPlayer = new Player();
+			NetState state = new NetState(client, newPlayer);
+			newPlayer.State = state;
+			playerList.Add(newPlayer);
 		}
 	}
 }
