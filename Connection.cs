@@ -195,11 +195,11 @@ namespace CXMineServer
 		private void IncomingData()
 		{
 			NetworkStream stream = _Client.GetStream();
-			Builder<byte> buffer = new Builder<byte>();
-			buffer.Append(_Buffer);
+			List<byte> buffer = new List<byte>();
+			buffer.AddRange(_Buffer);
 			
 			while (stream.DataAvailable) {
-				buffer.Append((byte) stream.ReadByte());
+				buffer.Add((byte) stream.ReadByte());
 			}
 			
 			_Buffer = buffer.ToArray();
@@ -242,20 +242,20 @@ namespace CXMineServer
             // special handling for the Player Block Placement case, coz of the double nature of the packet
             structure = ((type == PacketType.PlayerBlockPlace && BitConverter.ToInt16(_Buffer, 11) == (short)-1) ? "bibibs" : structure);
 			int bufPos = 0;
-			Builder<object> data = new Builder<object>();
+			List<object> data = new List<object>();
 			byte[] bytes = new byte[8];
 			
 			for (int i = 0; i < structure.Length; ++i) {
 				switch (structure[i]) {
 					case 'b':		// byte(1)
 						if ((bufPos + 1) > _Buffer.Length) return nPair;
-						data.Append((byte) _Buffer[bufPos]);
+						data.Add((byte) _Buffer[bufPos]);
 						bufPos += 1;
 						break;
 					
 					case 's':		// short(2)
 						if ((bufPos + 2) > _Buffer.Length) return nPair;
-						data.Append((short) IPAddress.NetworkToHostOrder(BitConverter.ToInt16(_Buffer, bufPos)));
+						data.Add((short) IPAddress.NetworkToHostOrder(BitConverter.ToInt16(_Buffer, bufPos)));
 						bufPos += 2;
 						break;
 					
@@ -264,12 +264,12 @@ namespace CXMineServer
 						for (int j = 0; j < 4; ++j) {
 							bytes[i] = _Buffer[bufPos + 3 - j];
 						}
-						data.Append((float) BitConverter.ToSingle(bytes, 0));
+						data.Add((float) BitConverter.ToSingle(bytes, 0));
 						bufPos += 4;
 						break;
 					case 'i':		// int(4)
 						if ((bufPos + 4) > _Buffer.Length) return nPair;
-						data.Append((int) IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_Buffer, bufPos)));
+						data.Add((int) IPAddress.NetworkToHostOrder(BitConverter.ToInt32(_Buffer, bufPos)));
 						bufPos += 4;
 						break;
 					
@@ -278,12 +278,12 @@ namespace CXMineServer
 						for (int j = 0; j < 8; ++j) {
 							bytes[j] = _Buffer[bufPos + 7 - j];
 						}
-						data.Append((double) BitConverter.ToDouble(bytes, 0));
+						data.Add((double) BitConverter.ToDouble(bytes, 0));
 						bufPos += 8;
 						break;
 					case 'l':		// long(8)
 						if ((bufPos + 8) > _Buffer.Length) return nPair;
-						data.Append((long) IPAddress.NetworkToHostOrder(BitConverter.ToInt64(_Buffer, bufPos)));
+						data.Add((long) IPAddress.NetworkToHostOrder(BitConverter.ToInt64(_Buffer, bufPos)));
 						bufPos += 8;
 						break;
 					
@@ -291,7 +291,7 @@ namespace CXMineServer
                         if ((bufPos + 2) > _Buffer.Length) return nPair;
                         int len = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(_Buffer, bufPos));
                         if ((bufPos + 2 + len) > _Buffer.Length) return nPair;
-                        data.Append((string)Encoding.UTF8.GetString(_Buffer, bufPos + 2, len));
+                        data.Add((string)Encoding.UTF8.GetString(_Buffer, bufPos + 2, len));
                         bufPos += (2 + len);
 						break;
 					

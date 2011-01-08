@@ -90,11 +90,11 @@ namespace CXMineServer
 		
 		public byte[] GetBytes()
 		{
-			Builder<Byte> builder = new Builder<Byte>();
-			builder.Append((byte[]) _Structure["Level"]["Blocks"].Payload);
-			builder.Append((byte[]) _Structure["Level"]["Data"].Payload);
-			builder.Append((byte[]) _Structure["Level"]["BlockLight"].Payload);
-			builder.Append((byte[]) _Structure["Level"]["SkyLight"].Payload);
+			List<Byte> builder = new List<Byte>();
+			builder.AddRange((byte[]) _Structure["Level"]["Blocks"].Payload);
+			builder.AddRange((byte[]) _Structure["Level"]["Data"].Payload);
+			builder.AddRange((byte[]) _Structure["Level"]["BlockLight"].Payload);
+			builder.AddRange((byte[]) _Structure["Level"]["SkyLight"].Payload);
 			return builder.ToArray();
 		}
 		
