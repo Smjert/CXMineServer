@@ -151,7 +151,7 @@ namespace CXMineServer
 				return slot;
 			if(slot<=83)
 				return slot-79;
-			return 108-slot
+			return 108-slot;
         }
 
         public static short GameToFileSlot(int slot)
