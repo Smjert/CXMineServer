@@ -120,6 +120,11 @@ namespace CXMineServer
 		public void Quit()
 		{
 			Running = false;
+
+			for(int i = playerList.Count - 1; i >= 0; --i)
+				playerList[i].State.Disconnect();
+
+			playerList.Clear();
 		}
 
         public static int getEID()

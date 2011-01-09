@@ -84,7 +84,7 @@ namespace CXMineServer
 			"bb",				// player base
 			"bddddb",			// player position
 			"bffb",				// player look
-			"bddddffb",			// player position+look
+			"bddddffb",			// player position+look bdddffb?
 			"bbibib",			// player digging
             "bibibsbb",         // player block place
 			"bs",				// player holding

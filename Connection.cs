@@ -79,7 +79,8 @@ namespace CXMineServer
 					current = i;
 					switch (structure[i]) {
 						case 'b':		// byte(1)
-							packet.Add((byte) args[i-1]);
+							//packet.Add(Convert.ToByte(args[i-1]));
+							packet.Add((byte)args[i-1]);
 							break;
 							
 						case 's':		// short(2)
@@ -205,12 +206,17 @@ namespace CXMineServer
 		private void IncomingData()
 		{
 			NetworkStream stream = _Client.GetStream();
-			List<byte> buffer = new List<byte>();
-			buffer.AddRange(_Buffer);
+			//List<byte> buffer = new List<byte>();
+			byte[] buffers = new byte[stream.Length];
+			//buffer.AddRange(_Buffer);
+
+			stream.Read(buffers, 0, _Client.ReceiveBufferSize);
 			
-			while (stream.DataAvailable) {
-				buffer.Add((byte) stream.ReadByte());
-			}
+			/*while (stream.DataAvailable) {
+				buffer.Add((byte) stream.Read);
+			}*/
+
+			buffers.
 			
 			_Buffer = buffer.ToArray();
 			buffer = null;
@@ -236,11 +242,9 @@ namespace CXMineServer
 		private Packet CheckCompletePacket()
 		{
 			PacketType type = (PacketType) _Buffer[0];
-			if (type == PacketType.PlayerInventory) {
-				CXMineServer.Log("Someone sent an inventory! :V");
-			}
+			
 			if (_Buffer[0] >= PacketStructure.Data.Length && _Buffer[0] != 0xFF) {
-				CXMineServer.Log("Got invalid packet: " + (byte)_Buffer[0]);
+				CXMineServer.Log("Got invalid packet: " + _Buffer[0]);
 				return new Packet();
 			} 
 			
@@ -315,7 +319,7 @@ namespace CXMineServer
 		
 		public void SendChunk(Chunk chunk)
 		{
-			Transmit(PacketType.PreChunk, chunk.ChunkX, chunk.ChunkZ, (byte) 1);
+			Transmit(PacketType.PreChunk, chunk.ChunkX, chunk.ChunkZ, (byte)1);
 			
 			byte[] uncompressed = chunk.GetBytes();
 			byte[] data;
@@ -561,8 +565,9 @@ namespace CXMineServer
                         // Destroy the entity beacuse it's collected
                         Transmit(PacketType.DestroyEntity, eid);
                         // Update the inventory coherently
-                        short slot = _Player.inventory.Add((short)block);
-                        Transmit(PacketType.SetSlot, (byte)0, Inventory.FileToGameSlot(slot), (short)block, (byte)_Player.inventory.GetItem(slot).Count, (byte)0);
+                        int slot = _Player.inventory.Add((short)block);
+						CXMineServer.Log("Sent to slot " + slot.ToString());
+                        Transmit(PacketType.SetSlot, (byte)0, /*Inventory.FileToGameSlot(*/(short)slot/*)*/, (short)block, (byte)_Player.inventory.GetItem(slot).Count, (byte)0);
                     }
                     else if ((byte)packet[1] == (byte)4)
                     {
@@ -721,6 +726,7 @@ namespace CXMineServer
                 // packet[6]: Item Count : byte
                 // packet[7]: Item uses : byte
                 case PacketType.WindowClick: {
+						short slot = (short)packet[2];
                         CXMineServer.Log("Received Window Click Packet");
                         Transmit(PacketType.Transaction, (byte)0, (short)12, (byte)0);
                         break;

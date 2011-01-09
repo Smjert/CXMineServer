@@ -16,6 +16,11 @@ namespace CXMineServer
 			_Conn.Transmit(PacketType.DestroyEntity, entityId);
 		}
 
+		public void Disconnect()
+		{
+			_Conn.Disconnect("Bye");
+		}
+
 		public void Message(string message)
 		{
 			_Conn.Transmit(PacketType.Message, message);
@@ -25,7 +30,7 @@ namespace CXMineServer
 		{
 			_Conn.Transmit(PacketType.NamedEntitySpawn, entityId,
 					userName, x, y, z,
-					0, 0, holdingPos);
+					extra1, extra2, holdingPos);
 		}
 
 		public void PlayerPositionLook(double x, double y, double z, float yaw, float pitch, byte extra)
@@ -63,9 +68,5 @@ namespace CXMineServer
 		{
 			_Conn.Transmit(PacketType.UpdateHealth, payload);
 		}
-
-		
-
-		
 	}
 }

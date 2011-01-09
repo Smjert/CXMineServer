@@ -1,26 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Net.Sockets;
 
 namespace CXMineServer
 {
-	class Packet
+	public abstract class Packet
 	{
+		protected PacketWriter _Writer;
+
+		public PacketType Type
+		{
+			get;
+			private set;
+		}
 		public int Length { 
 			get;
 			private set; 
 		}
-		public object[] Values { 
-			get;
-			private set; 
-		}
 
-		public Packet(int index, object[] values)
+		public Packet(PacketType type, int length)
 		{
-			Length = index;
-			Values = values;
+			Length = length;
+			Type = type;
 		}
 
-		public Packet(){}
+		public Packet(PacketType type)
+		{
+			Type = type;
+		}
+
+		public Packet()
+		{
+
+		}
+
+		public void SetCapacity(int length)
+		{
+			Length = length;
+			_Writer = PacketWriter.CreateInstance(length);
+		}
 	}
 }

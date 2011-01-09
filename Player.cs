@@ -90,24 +90,27 @@ namespace CXMineServer
                 slotList.Add(new Slot(this));
         }
 
-        public short Add(short id)
+        public int Add(short id)
         {
-            short slot = GetFirstAvailableSlotFor(id);
-            if (slot == (short)-1)
+            int slot = GetFirstAvailableSlotFor(id);
+
+            if (slot == -1)
                 return -1;
-            if (slotList[slot].Id == (short)-1)
-            {
-                CXMineServer.Log("Adding id " + id);
-                AddToPosition(slot, id, 1, 0);
-            }
-            else
-                slotList[slot].Count += 1;
-            return slot;
+
+			AddToPosition(slot, id, 1, 0);
+
+			return slot;
         }
 
         public void AddToPosition(int position, short id, short count, short uses)
         {
-            slotList[position] = new Slot(this, count, id, uses, position);
+			if (slotList[position].Id == -1)
+			{
+				CXMineServer.Log("Adding id " + id);
+				slotList[position] = new Slot(this, count, id, uses, position);
+			}
+			else
+				slotList[position].Count += 1;
         }
 
         public void Remove(int position, int quantity = 1)
@@ -162,23 +165,47 @@ namespace CXMineServer
 			return (short)(slot-36);
         }
 
-        private short GetFirstAvailableSlotFor(short id)
+        private int GetFirstAvailableSlotFor(short id)
         {
 			// TODO: non dovresti controllare che ci siano meno di 64 item nello slot?
-            for (short i = 0; i < slotList.Capacity; i++ )
-            {
-                if (slotList[i].Id == id)
-                    return i;
-            }
 
-            for (short i = 0; i < slotList.Capacity; i++)
-            {
-                if (slotList[i].Id == (short)-1)
-                    return i;
-            }
+			/* First we control if there's already the same block type on the quickbar or if there's a free slot.
+			 * If nothing is found we check the internal inventory */
+			int slot = -1;
+			if((slot = QuickBarFindIdSlot(id)) == -1)
+			{
+				for (int i = 9; i < 36; i++)
+				{
+					if (slotList[i].Count == 64)
+						continue;
 
-            return -1;
+					if (slotList[i].Id == id)
+						return i;
+					else if (slot == -1 && slotList[i].Id == -1)
+						slot = i;
+				}
+			}
+
+            return slot;
         }
+
+		private int QuickBarFindIdSlot(short id)
+		{
+			int freeSlot = -1;
+
+			for (int i = 36; i < slotList.Count; ++i)
+			{
+				if (slotList[i].Count == 64)
+					continue;
+
+				if(slotList[i].Id == id)
+					return i;
+				else if (freeSlot == -1 && slotList[i].Id == -1)
+					freeSlot = i;
+			}
+
+			return freeSlot;
+		} 
     }
 
 	public class Player : Entity
@@ -335,8 +362,9 @@ namespace CXMineServer
 				}
 			}
 			VisibleEntities = newVisibleEntities;
-			
+
 			_State.TimeUpdate(CXMineServer.Server.World.Time);
+			
 			base.Update();
 		}
 		
