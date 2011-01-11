@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace CXMineServer
 {
@@ -49,8 +50,27 @@ namespace CXMineServer
 				return playerList;
 			}
 		}
+
+		private Queue<NetState> queue;
+		public Queue<NetState> Queue
+		{
+			get{
+				return queue;
+			}
+		}
+
+		private Queue<NetState> currentQueue;
+		public Queue<NetState> CurrentQueue
+		{
+			get{
+				return currentQueue;
+			}
+		}
+
+		public static SocketAsyncEventArgsPool ReadWritePool;
+		private AutoResetEvent _Signal;
 		
-		private TcpListener _Listener;
+		private Listener _Listener;
 
         private static int EID = 0;
 		
@@ -66,7 +86,14 @@ namespace CXMineServer
 			
 			World = null;
 			playerList = new List<Player>();
-			_Listener = new TcpListener(new IPEndPoint(IPAddress.Any, Port));
+			_Listener = new Listener(new IPEndPoint(IPAddress.Any, Port));
+
+			ReadWritePool = new SocketAsyncEventArgsPool(50);
+		}
+
+		public void Signal()
+		{
+			_Signal.Set();
 		}
 		
 		public void Run()
@@ -80,18 +107,41 @@ namespace CXMineServer
 				World.ForceSave();*/
 				return;
 			}
+
+			for (int i = 0; i < 50; ++i)
+			{
+				SocketAsyncEventArgs socketEvent = new SocketAsyncEventArgs();
+				socketEvent.Completed += NetState.OnCompleted;
+				socketEvent.UserToken = new AsyncUserToken();
+				socketEvent.SetBuffer(new byte[1024], 0, 1024);
+
+				ReadWritePool.Push(socketEvent);
+			}
 			
 			_Listener.Start();
 			CXMineServer.Log("Listening on port " + Port);
 			Running = true;
 			
-			while (Running) {
-				// Check for new connections
+			while (_Signal.WaitOne()) {
+
+				lock(this)
+				{
+					Queue<byte[]> tmp = currentQueue;
+					currentQueue = queue;
+					queue = tmp;
+				}
+
+				for (int i = 0; i < currentQueue.Count; ++i )
+				{
+					byte[] buffer = currentQueue.Dequeue();
+					
+				}
+				/*// Check for new connections
 				while (_Listener.Pending()) {
 					AcceptConnection(_Listener.AcceptTcpClient());
-				}
+				}*/
 				
-				Thread.Sleep(100);
+				//Thread.Sleep(100);
 			}
 			
 			World.ForceSave();
@@ -135,7 +185,7 @@ namespace CXMineServer
 		// ====================
 		// Private helpers.
 		
-		private void AcceptConnection(TcpClient client)
+		private void AcceptConnection(Socket client)
 		{
 			Player newPlayer = new Player();
 			NetState state = new NetState(client, newPlayer);

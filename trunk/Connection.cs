@@ -15,19 +15,21 @@ namespace CXMineServer
 		public string IPString;
 		
 		private Thread _Thread;
-		private TcpClient _Client;
-		private Queue<byte[]> _TransmitQueue;
-		private bool _Running;
+		private Socket _Client;
+		private Queue<Packet> _CurrentQueue;
+		private Queue<Packet> _TransmitQueue;
+		//private bool _Running;
+		private AutoResetEvent _Signal;
 		private byte[] _Buffer;
 		private Player _Player;
-		
-		public Connection(TcpClient client, Player player)
+
+		public Connection(Socket client, Player player)
 		{
 			_Client = client;
-			IPString = _Client.Client.RemoteEndPoint.ToString();
+			IPString = _Client.RemoteEndPoint.ToString();
 			
-			_Running = true;
-			_TransmitQueue = new Queue<byte[]>();
+			_TransmitQueue = new Queue<Packet>();
+			_CurrentQueue = new Queue<Packet>();
 			_Buffer = new byte[0];
 			_Player = player;
 			
@@ -38,7 +40,6 @@ namespace CXMineServer
 		
 		public void Stop()
 		{
-			_Running = false;
 		}
 		
 		#region Network code
@@ -141,6 +142,8 @@ namespace CXMineServer
 			double lastUpdateChunks = 0;
 			
 			while (_Running) {
+
+
 				while (_TransmitQueue.Count > 0) {
 					byte[] next = _TransmitQueue.Dequeue();
 					TransmitRaw(next);

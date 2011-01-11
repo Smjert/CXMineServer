@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using System;
 
 namespace CXMineServer
 {
@@ -6,7 +7,23 @@ namespace CXMineServer
 	{
 		private Connection _Conn;
 
-		public NetState(TcpClient client, Player player)
+		public static EventHandler<SocketAsyncEventArgs> OnCompleted = new EventHandler<SocketAsyncEventArgs>(SocketOnCompleted);
+
+		private byte[] _Buffer = new byte[4096];
+
+		public byte[] Buffer
+		{
+			get { return _Buffer; }
+		}
+
+		private int _BufferLength;
+
+		public int BufferLength
+		{
+			get { return _BufferLength; }
+		}
+
+		public NetState(Socket client, Player player)
 		{
 			_Conn = new Connection(client, player);
 		}
@@ -68,5 +85,41 @@ namespace CXMineServer
 		{
 			_Conn.Transmit(PacketType.UpdateHealth, payload);
 		}
+
+		public static void SocketOnCompleted(object sender, SocketAsyncEventArgs e)
+		{
+			switch (e.LastOperation)
+			{
+				case SocketAsyncOperation.Receive:
+					(e.UserToken as NetState).OnReceive(e);
+					break;
+				case SocketAsyncOperation.Send:
+					(e.UserToken as NetState).OnSend(e);
+					break;
+				default:
+					throw new ArgumentException("The last operation completed on the socket was not a receive or send");
+			} 
+		}
+
+		public void OnReceive(SocketAsyncEventArgs e)
+		{
+			AsyncUserToken asyncToken = (AsyncUserToken)e.UserToken;
+
+			Array.Copy(e.Buffer, _Buffer, e.BytesTransferred);
+
+			if(e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
+			{
+				lock (CXMineServer.Server)
+				{
+					CXMineServer.Server.Queue.Enqueue(this);
+				}
+			}
+		}
+
+		public void OnSend(SocketAsyncEventArgs e)
+		{
+
+		}
+		
 	}
 }
