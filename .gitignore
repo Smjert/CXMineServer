@@ -1,0 +1,7 @@
+bin/Debug/
+bin/Release/
+obj/
+CXMineServer.suo
+#Files created by Monodevelop
+CXMineServer.pidb
+CXMineServer.userprefs
