@@ -124,17 +124,68 @@ namespace CXMineServer
 			
 			while (_Signal.WaitOne()) {
 
-				lock(this)
+				lock(queue)
 				{
-					Queue<byte[]> tmp = currentQueue;
+					Queue<NetState> tmp = currentQueue;
 					currentQueue = queue;
 					queue = tmp;
 				}
 
 				for (int i = 0; i < currentQueue.Count; ++i )
 				{
-					byte[] buffer = currentQueue.Dequeue();
-					
+					NetState ns = currentQueue.Dequeue();
+					ByteQueue buffer = ns.Buffer;
+
+					lock(buffer)
+					{
+						int length = buffer.Length;
+
+						while(length > 0)
+						{
+							int packetID = buffer.GetPacketID();
+							PacketHandler handler = PacketHandlers.GetHandler((PacketType)packetID);
+							byte[] data;
+
+							if (handler == null)
+							{
+								data = new byte[length];
+								length = buffer.Dequeue(data, 0, length);
+
+								CXMineServer.Log("Unhandled packet arrived");
+
+								break;
+							}
+
+							if(buffer.UnderlyingBuffer.Length > 2048)
+								ns.Disconnect();
+
+							PacketReader packetReader;
+
+							if(handler.Length == 0)
+							{
+								packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.UnderlyingBuffer.Length);
+								handler.OnReceive(ns, packetReader);
+
+								data = new byte[packetReader.Index + 1];
+
+								if(!packetReader.Failed)
+									buffer.Dequeue(data, 0, packetReader.Index);
+							}
+							else
+							{
+								data = new byte[handler.Length];
+								int packetLength = buffer.Dequeue(data, 0, handler.Length);
+								
+								packetReader = new PacketReader(data, packetLength);
+								handler.OnReceive(ns, packetReader);
+
+								if (packetReader.Failed)
+									ns.Disconnect();
+							}
+
+							length = buffer.Length;
+						}
+					}
 				}
 				/*// Check for new connections
 				while (_Listener.Pending()) {

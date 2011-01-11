@@ -21,7 +21,7 @@
 using System;
 using System.IO;
 
-namespace Server.Network
+namespace CXMineServer
 {
 	public class ByteQueue
 	{
@@ -32,6 +32,11 @@ namespace Server.Network
 		private byte[] m_Buffer;
 
 		public int Length{ get{ return m_Size; } }
+
+		public byte[] UnderlyingBuffer
+		{
+			get { return m_Buffer; }
+		}
 
 		public ByteQueue()
 		{
@@ -73,14 +78,6 @@ namespace Server.Network
 				return m_Buffer[m_Head];
 
 			return 0xFF;
-		}
-
-		public int GetPacketLength()
-		{
-			if ( m_Size >= 3 )
-				return (m_Buffer[(m_Head + 1) % m_Buffer.Length] << 8) | m_Buffer[(m_Head + 2) % m_Buffer.Length];
-
-			return 0;
 		}
 
 		public int Dequeue( byte[] buffer, int offset, int size )
