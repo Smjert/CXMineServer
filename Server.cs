@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 namespace CXMineServer
 {
@@ -67,8 +68,10 @@ namespace CXMineServer
 			}
 		}
 
-		public static SocketAsyncEventArgsPool ReadWritePool;
-		private AutoResetEvent _Signal;
+		public static SocketAsyncEventArgsPool ReadPool;
+		public static SocketAsyncEventArgsPool WritePool;
+
+		private static AutoResetEvent _Signal = new AutoResetEvent(true);
 		
 		private Listener _Listener;
 
@@ -88,7 +91,11 @@ namespace CXMineServer
 			playerList = new List<Player>();
 			_Listener = new Listener(new IPEndPoint(IPAddress.Any, Port));
 
-			ReadWritePool = new SocketAsyncEventArgsPool(50);
+			ReadPool = new SocketAsyncEventArgsPool(50);
+			WritePool = new SocketAsyncEventArgsPool(50);
+
+			queue = new Queue<NetState>();
+			currentQueue = new Queue<NetState>();
 		}
 
 		public void Signal()
@@ -110,80 +117,90 @@ namespace CXMineServer
 
 			for (int i = 0; i < 50; ++i)
 			{
-				SocketAsyncEventArgs socketEvent = new SocketAsyncEventArgs();
-				socketEvent.Completed += NetState.OnCompleted;
-				socketEvent.UserToken = new AsyncUserToken();
-				socketEvent.SetBuffer(new byte[1024], 0, 1024);
-
-				ReadWritePool.Push(socketEvent);
+				ReadPool.Push(new SocketAsyncEventArgs());
+				WritePool.Push(new SocketAsyncEventArgs());
 			}
 			
-			_Listener.Start();
+			try
+			{
+				_Listener.Start();
+			}
+			catch (System.Exception ex)
+			{
+				CXMineServer.Log(ex.Message);
+				Console.ReadLine();
+			}
+			
 			CXMineServer.Log("Listening on port " + Port);
 			Running = true;
 			
 			while (_Signal.WaitOne()) {
 
-				lock(queue)
+				if(queue != null && queue.Count > 0)
 				{
-					Queue<NetState> tmp = currentQueue;
-					currentQueue = queue;
-					queue = tmp;
-				}
-
-				for (int i = 0; i < currentQueue.Count; ++i )
-				{
-					NetState ns = currentQueue.Dequeue();
-					ByteQueue buffer = ns.Buffer;
-
-					lock(buffer)
+					lock (queue)
 					{
-						int length = buffer.Length;
+						Queue<NetState> tmp = currentQueue;
+						currentQueue = queue;
+						queue = tmp;
+					}
 
-						while(length > 0)
+					for (int i = 0; i < currentQueue.Count; ++i)
+					{
+						NetState ns = currentQueue.Dequeue();
+						ByteQueue buffer = ns.Buffer;
+
+						lock (buffer)
 						{
-							int packetID = buffer.GetPacketID();
-							PacketHandler handler = PacketHandlers.GetHandler((PacketType)packetID);
-							byte[] data;
+							int length = buffer.Length;
 
-							if (handler == null)
+							while (length > 0)
 							{
-								data = new byte[length];
-								length = buffer.Dequeue(data, 0, length);
+								int packetID = buffer.GetPacketID();
+								PacketHandler handler = PacketHandlers.GetHandler((PacketType)packetID);
 
-								CXMineServer.Log("Unhandled packet arrived");
+								CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
+								byte[] data;
 
-								break;
-							}
+								if (handler == null)
+								{
+									data = new byte[length];
+									length = buffer.Dequeue(data, 0, length);
 
-							if(buffer.UnderlyingBuffer.Length > 2048)
-								ns.Disconnect();
+									CXMineServer.Log("Unhandled packet arrived");
 
-							PacketReader packetReader;
+									break;
+								}
 
-							if(handler.Length == 0)
-							{
-								packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.UnderlyingBuffer.Length);
-								handler.OnReceive(ns, packetReader);
-
-								data = new byte[packetReader.Index + 1];
-
-								if(!packetReader.Failed)
-									buffer.Dequeue(data, 0, packetReader.Index);
-							}
-							else
-							{
-								data = new byte[handler.Length];
-								int packetLength = buffer.Dequeue(data, 0, handler.Length);
-								
-								packetReader = new PacketReader(data, packetLength);
-								handler.OnReceive(ns, packetReader);
-
-								if (packetReader.Failed)
+								if (buffer.UnderlyingBuffer.Length > 2048)
 									ns.Disconnect();
-							}
 
-							length = buffer.Length;
+								PacketReader packetReader;
+
+								if (handler.Length == 0)
+								{
+									packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.UnderlyingBuffer.Length);
+									handler.OnReceive(ns, packetReader);
+
+									data = new byte[packetReader.Index + 1];
+
+									if (!packetReader.Failed)
+										buffer.Dequeue(data, 0, packetReader.Index);
+								}
+								else
+								{
+									data = new byte[handler.Length];
+									int packetLength = buffer.Dequeue(data, 0, handler.Length);
+
+									packetReader = new PacketReader(data, packetLength);
+									handler.OnReceive(ns, packetReader);
+
+									if (packetReader.Failed)
+										ns.Disconnect();
+								}
+
+								length = buffer.Length;
+							}
 						}
 					}
 				}
@@ -235,13 +252,6 @@ namespace CXMineServer
 		
 		// ====================
 		// Private helpers.
-		
-		private void AcceptConnection(Socket client)
-		{
-			Player newPlayer = new Player();
-			NetState state = new NetState(client, newPlayer);
-			newPlayer.State = state;
-			playerList.Add(newPlayer);
-		}
+
 	}
 }

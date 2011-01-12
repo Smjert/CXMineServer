@@ -40,5 +40,12 @@ namespace CXMineServer
 			Length = length;
 			_Writer = PacketWriter.CreateInstance(length);
 		}
+
+		public byte[] GetBuffer()
+		{
+			byte[] buffer = _Writer.UnderlyingStream.GetBuffer();
+			PacketWriter.ReleaseInstance(_Writer);
+			return buffer;
+		}
 	}
 }

@@ -31,9 +31,11 @@ namespace CXMineServer
 			}
 			catch (Exception e) {
 				Log("Fatal uncaught exception: " + e);
+				Console.ReadLine();
 			}
 			
 			Log("Bye!");
+			Console.ReadLine();
 		}
 		
 		public static void Log(string message)

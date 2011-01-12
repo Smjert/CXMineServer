@@ -4,6 +4,13 @@ using System.Text;
 
 namespace CXMineServer
 {
+	public class KeepAlive : Packet
+	{
+		public KeepAlive() : base (PacketType.KeepAlive, 1)
+		{
+		}
+	}
+
 	public class DestroyEntity : Packet
 	{
 		public DestroyEntity(int entityId) : base(PacketType.DestroyEntity, 5)

@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="AsyncUserToken.cs" />
+    <Compile Include="BufferPool.cs" />
     <Compile Include="ByteQueue.cs" />
     <Compile Include="CXMineServer.cs" />
     <Compile Include="Constants\Blocks.cs" />
@@ -76,6 +77,7 @@
     <Compile Include="PacketReader.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="PacketWriter.cs" />
+    <Compile Include="SendQueue.cs" />
     <Compile Include="SocketAsyncEventArgsPool.cs" />
     <Compile Include="Utils\Configuration.cs" />
     <Compile Include="Utils\NBT.cs" />
