@@ -25,7 +25,7 @@ namespace CXMineServer
 		{
 			_Conn.Transmit(PacketType.NamedEntitySpawn, entityId,
 					userName, x, y, z,
-					0, 0, holdingPos);
+					extra1, extra2, holdingPos);
 		}
 
 		public void PlayerPositionLook(double x, double y, double z, float yaw, float pitch, byte extra)
