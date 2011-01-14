@@ -36,14 +36,16 @@ namespace CXMineServer
 	{
 		private PacketType _PacketID;
 		private int _Length;
+		private int _MinimumLength;
 		private OnPacketReceive _OnReceive;
 
 		private ThrottlePacketCallback m_ThrottleCallback;
 
-		public PacketHandler( PacketType packetID, int length, OnPacketReceive onReceive )
+		public PacketHandler( PacketType packetID, int length, int minimunLength, OnPacketReceive onReceive )
 		{
 			_PacketID = packetID;
 			_Length = length;
+			_MinimumLength = minimunLength;
 			_OnReceive = onReceive;
 		}
 
@@ -68,6 +70,14 @@ namespace CXMineServer
 			get
 			{
 				return _Length;
+			}
+		}
+
+		public int MinimumLength
+		{
+			get
+			{
+				return _MinimumLength;
 			}
 		}
 

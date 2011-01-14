@@ -296,7 +296,7 @@ namespace CXMineServer
 						_State.SetSlot((byte)0, realSlot,
 						               _inventory[i]["id"].Payload,
 						               _inventory[i]["Count"].Payload,
-						               (byte)((short)_inventory[i]["Damage"].Payload));
+						               (short)_inventory[i]["Damage"].Payload);
 					}
 				}
             }

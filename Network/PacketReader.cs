@@ -83,12 +83,56 @@ namespace CXMineServer
 			return m_Index;
 		}
 
+		public float ReadFloat()
+		{
+			if ((m_Index + 4) > m_Size)
+				return 0.0f;
+
+			float result = BitConverter.ToSingle(m_Data, m_Index);
+			m_Index += 4;
+
+			return result;
+		}
+
+		public double ReadDouble()
+		{
+			if ((m_Index + 8) > m_Size)
+				return 0.0;
+
+			double result = BitConverter.ToDouble(m_Data, m_Index);
+			m_Index += 8;
+
+			return result;
+		}
+
+		public bool ReadBool()
+		{
+			if ((m_Index + 1) > m_Size)
+				return false;
+
+			return (m_Data[m_Index++] != 0);
+		}
+
+		public long ReadInt64()
+		{
+			if ((m_Index + 8) > m_Size)
+				return 0;
+
+			long result = IPAddress.NetworkToHostOrder(BitConverter.ToInt64(m_Data, m_Index));
+			m_Index += 8;
+
+			return result;
+		}
+
 		public int ReadInt32()
 		{
 			if ( (m_Index + 4) > m_Size )
 				return 0;
+			
+			int result = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(m_Data, m_Index));
+			m_Index += 4;
 
-			return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(m_Data, m_Index));
+			return result;
 		}
 
 		public short ReadInt16()
@@ -96,7 +140,10 @@ namespace CXMineServer
 			if ( (m_Index + 2) > m_Size )
 				return 0;
 
-			return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(m_Data, m_Index));
+			short result = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(m_Data, m_Index));
+			m_Index += 2;
+
+			return result;
 		}
 
 		public byte ReadByte()
@@ -104,7 +151,7 @@ namespace CXMineServer
 			if ( (m_Index + 1) > m_Size )
 				return 0;
 
-			return m_Data[m_Index];
+			return m_Data[m_Index++];
 		}
 
 		public string ReadString(int length)
@@ -112,7 +159,10 @@ namespace CXMineServer
 			if ((m_Index + length) > m_Size)
 				return "";
 
-			return Encoding.UTF8.GetString(m_Data, m_Index, length);
+			string result = Encoding.UTF8.GetString(m_Data, m_Index, length);
+			m_Index += length;
+
+			return result;
 		}
 	}
 }

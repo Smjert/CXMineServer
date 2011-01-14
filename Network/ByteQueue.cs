@@ -38,6 +38,21 @@ namespace CXMineServer
 			get { return m_Buffer; }
 		}
 
+		public int Head
+		{
+			get { return m_Head; }
+		}
+
+		public int Tail
+		{
+			get { return m_Tail; }
+		}
+
+		public int Size
+		{
+			get { return m_Size; }
+		}
+
 		public ByteQueue()
 		{
 			m_Buffer = new byte[2048];

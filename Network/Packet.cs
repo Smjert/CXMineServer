@@ -19,10 +19,14 @@ namespace CXMineServer
 			private set; 
 		}
 
+		protected List<byte[]> _Strings;
+
 		public Packet(PacketType type, int length)
 		{
 			Length = length;
 			Type = type;
+			_Writer = PacketWriter.CreateInstance(length);
+			_Writer.Write((byte)Type);
 		}
 
 		public Packet(PacketType type)
@@ -39,12 +43,35 @@ namespace CXMineServer
 		{
 			Length = length;
 			_Writer = PacketWriter.CreateInstance(length);
+			_Writer.Write((byte)Type);
 		}
+
+		public void SetCapacity(int fixedLength, params string[] args)
+		{
+			byte[] bytes;
+
+			Length = fixedLength;
+			_Strings = new List<byte[]>();
+			for (int i = 0; i < args.Length; ++i)
+			{
+				bytes = Encoding.UTF8.GetBytes(args[i]);
+				Length += bytes.Length;
+				_Strings.Add(bytes);
+			}
+
+			_Writer = PacketWriter.CreateInstance(Length);
+			_Writer.Write((byte)Type);
+		}
+
 
 		public byte[] GetBuffer()
 		{
-			byte[] buffer = _Writer.UnderlyingStream.GetBuffer();
+			byte[] buffer = new byte[Length];
+			Buffer.BlockCopy(_Writer.UnderlyingStream.GetBuffer(), 0, buffer, 0, Length);
 			PacketWriter.ReleaseInstance(_Writer);
+
+			if(_Strings != null)
+				_Strings.Clear();
 			return buffer;
 		}
 	}

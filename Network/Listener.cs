@@ -54,7 +54,13 @@ namespace CXMineServer
 			{
 				NetState ns = new NetState();
 				ns.Connection = e.AcceptSocket;
+				//ns.Connection.Blocking = false;
+				NetworkStream nts = new NetworkStream(ns.Connection);
+				ns.Connection.NoDelay = true;
+				ns.stream = nts;
 				ns.Owner = new Player();
+				ns.Owner.State = ns;
+				CXMineServer.Server.AddPlayer(ns.Owner);
 				ns.Start();
 
 				StartAccept(e);

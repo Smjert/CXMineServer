@@ -78,22 +78,22 @@ namespace CXMineServer
 
 		public void Write(byte value)
 		{
-			_Stream.Write(BitConverter.GetBytes(IPAddress.NetworkToHostOrder(value)), 0, 1);
+			_Stream.WriteByte(value);
 		}
 
 		public void Write(short value)
 		{
-			_Stream.Write(BitConverter.GetBytes(IPAddress.NetworkToHostOrder(value)), 0, 2);
+			_Stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 2);
 		}
 
 		public void Write(int value)
 		{
-			_Stream.Write(BitConverter.GetBytes(IPAddress.NetworkToHostOrder(value)), 0, 4);
+			_Stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 4);
 		}
 
 		public void Write(long value)
 		{
-			_Stream.Write(BitConverter.GetBytes(IPAddress.NetworkToHostOrder(value)), 0, 8);
+			_Stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 8);
 		}
 
 		public void Write(float value)
@@ -106,11 +106,10 @@ namespace CXMineServer
 			_Stream.Write(BitConverter.GetBytes(value), 0, 8);
 		}
 
-		public void Write(string value)
+		public void WriteString(byte[] value)
 		{
-			byte[] bytes = Encoding.UTF8.GetBytes(value);
-			_Stream.Write(BitConverter.GetBytes(IPAddress.NetworkToHostOrder((short) bytes.Length)), 0, 2);
-			_Stream.Write(bytes, 2, bytes.Length);
+			_Stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)value.Length)), 0, 2);
+			_Stream.Write(value, 0, value.Length);
 		}
 
 		public void Write(byte[] value)

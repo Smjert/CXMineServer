@@ -40,21 +40,40 @@ namespace CXMineServer
 		{
 			m_Handlers = new PacketHandler[0x100];
 
-			Register(PacketType.DestroyEntity, 0, new OnPacketReceive(ReadPlayerBlockPlace));
-			Register(PacketType.PlayerInventory, 9, new OnPacketReceive(ReadPlayerInventory));
-			Register(PacketType.Handshake, 0, new OnPacketReceive(ReadHandshake));
-			Register(PacketType.LoginDetails, 0, new OnPacketReceive(ReadLoginDetails));
-			Register(PacketType.KeepAlive, 1, new OnPacketReceive(ReadKeepAlive));
+			Register(PacketType.DestroyEntity, 0, 13, new OnPacketReceive(ReadPlayerBlockPlace));
+			Register(PacketType.PlayerInventory, 11, 0, new OnPacketReceive(ReadPlayerInventory));
+			Register(PacketType.Handshake, 0, 3, new OnPacketReceive(ReadHandshake));
+			Register(PacketType.LoginDetails, 0, 18, new OnPacketReceive(ReadLoginDetails));
+			Register(PacketType.KeepAlive, 1, 0, new OnPacketReceive(ReadKeepAlive));
+			Register(PacketType.PlayerPositionLook, 42, 0, new OnPacketReceive(ReadPlayerPositionLook));
 		}
 
-		public static void Register(PacketType packetID, int length, OnPacketReceive onReceive)
+		public static void Register(PacketType packetID, int length, int minimumLength, OnPacketReceive onReceive)
 		{
-			m_Handlers[(byte)packetID] = new PacketHandler(packetID, length, onReceive);
+			m_Handlers[(byte)packetID] = new PacketHandler(packetID, length, minimumLength, onReceive);
 		}
 
 		public static PacketHandler GetHandler(PacketType packetID)
 		{
 			return m_Handlers[(byte)packetID];
+		}
+
+		public static void ReadHandshake(NetState ns, PacketReader packetReader)
+		{
+			short length = packetReader.ReadInt16();
+
+			if (packetReader.Index + length <= packetReader.Size)
+			{
+				string username = packetReader.ReadString(length);
+				ns.Owner.Username = username;
+			}
+			else
+			{
+				packetReader.Failed = true;
+				return;
+			}
+
+			ns.Handshake();
 		}
 
 		public static void ReadKeepAlive(NetState ns, PacketReader packetReader)
@@ -67,7 +86,10 @@ namespace CXMineServer
 			int protocolVersion = packetReader.ReadInt32();
 
 			if (protocolVersion != CXMineServer.ProtocolVersion)
+			{	
 				ns.Disconnect();
+				return;
+			}
 
 			short userNameLength = packetReader.ReadInt16();
 			string username;
@@ -75,8 +97,6 @@ namespace CXMineServer
 			if (packetReader.Index + userNameLength < packetReader.Size)
 			{
 				username = packetReader.ReadString(userNameLength);
-				if (username != ns.Owner.Username)
-					ns.Disconnect();
 			}
 			else
 			{
@@ -87,27 +107,21 @@ namespace CXMineServer
 			short passwordLength = packetReader.ReadInt16();
 			string password;
 
-			if (packetReader.Index + passwordLength < packetReader.Size)
+			if (packetReader.Index + passwordLength <= packetReader.Size)
 			{
 				password = packetReader.ReadString(passwordLength);
 			}
 
-		}
-
-		public static void ReadHandshake(NetState ns, PacketReader packetReader)
-		{
-			short length = packetReader.ReadInt16();
-
-			if(packetReader.Index + length < packetReader.Size)
-			{
-				string username = packetReader.ReadString(length);
-				ns.Owner.Username = username;
-			}
-			else
-			{
-				packetReader.Failed = true;
+			if (username != ns.Owner.Username)
+			{	
+				ns.Disconnect();
 				return;
 			}
+
+			packetReader.ReadInt64();
+			packetReader.ReadByte();
+
+			ns.Login();
 		}
 
 		public static void ReadPlayerBlockPlace(NetState ns, PacketReader packetReader)
@@ -122,7 +136,7 @@ namespace CXMineServer
 			byte amount;
 			byte damage;
 
-			if(packetReader.Index + 4 < packetReader.Size)
+			if(packetReader.Index + 4 <= packetReader.Size)
 			{
 				if((id = packetReader.ReadInt16()) >= 0)
 				{
@@ -142,11 +156,32 @@ namespace CXMineServer
 			int entityId = packetReader.ReadInt32();
 			short slot = packetReader.ReadInt16();
 			short itemId = packetReader.ReadInt16();
+			short damage = packetReader.ReadInt16();
 
 			if (slot < 0 || slot > 44)
 				return;
 
 			CXMineServer.Log("Received Player Inventory Packet");
+		}
+
+		public static void ReadPlayerPositionLook(NetState ns, PacketReader packetReader)
+		{
+			double x = packetReader.ReadDouble();
+			double stance = packetReader.ReadDouble();
+			double y = packetReader.ReadDouble();
+			double z = packetReader.ReadDouble();
+
+			float yaw = packetReader.ReadFloat();
+			float pitch = packetReader.ReadFloat();
+
+			ns.Owner.Yaw = yaw;
+			ns.Owner.Pitch = pitch;
+
+			ns.Owner.X = x;
+			ns.Owner.Y = y;
+			ns.Owner.Z = z;
+
+			bool onGround = packetReader.ReadBool();
 		}
 	}
 }

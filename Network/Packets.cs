@@ -19,6 +19,31 @@ namespace CXMineServer
 		}
 	}
 
+	public class Handshake : Packet
+	{
+		public Handshake(string hash) : base(PacketType.Handshake)
+		{
+			SetCapacity(3, hash);
+
+			_Writer.WriteString(_Strings[0]);
+		}
+	}
+
+	public class LoginDetails : Packet
+	{
+		public LoginDetails(int entityId, string name, string motd) : base(PacketType.LoginDetails)
+		{
+			SetCapacity(18, name, motd);
+
+			_Writer.Write(entityId);
+			
+			_Writer.WriteString(_Strings[0]);
+			_Writer.WriteString(_Strings[1]);
+			_Writer.Write((long)0);
+			_Writer.Write((byte)0);
+		}
+	}
+
 	public class MapChunk : Packet
 	{
 		public MapChunk(int x, short boh, int z, byte extra1, byte extra2, byte extra3, int dataLength, byte[] data)
@@ -41,9 +66,9 @@ namespace CXMineServer
 	{
 		public Message(string message) : base(PacketType.Message)
 		{
-			SetCapacity(3 + message.Length);
+			SetCapacity(3, message);
 
-			_Writer.Write(message);
+			_Writer.WriteString(_Strings[0]);
 		}
 	}
 
@@ -51,10 +76,10 @@ namespace CXMineServer
 	{
 		public NamedEntitySpawn(int entityId, string userName, int x, int y, int z, byte extra1, byte extra2, short holdingPos) : base(PacketType.NamedEntitySpawn)
 		{
-			SetCapacity(23 + userName.Length);
+			SetCapacity(23, userName);
 
 			_Writer.Write(entityId);
-			_Writer.Write(userName);
+			_Writer.WriteString(_Strings[0]);
 			_Writer.Write(x);
 			_Writer.Write(y);
 			_Writer.Write(z);
@@ -89,7 +114,7 @@ namespace CXMineServer
 
 	public class SetSlot : Packet
 	{
-		public SetSlot(byte extra, short slot, short idPayload, byte countPayload, byte damage) : base(PacketType.SetSlot, 8)
+		public SetSlot(byte extra, short slot, short idPayload, byte countPayload, short damage) : base(PacketType.SetSlot, 9)
 		{
 			_Writer.Write(extra);
 			_Writer.Write(slot);

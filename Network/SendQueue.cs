@@ -94,7 +94,12 @@ namespace CXMineServer
 			}
 		}
 
-		private static int m_CoalesceBufferSize = 512;
+		public int Count
+		{
+			get { return _pending.Count; }
+		}
+
+		private static int m_CoalesceBufferSize = 1024;
 		private static BufferPool m_UnusedBuffers = new BufferPool( "Coalesced", 2048, m_CoalesceBufferSize );
 
 		public static int CoalesceBufferSize {
@@ -170,7 +175,7 @@ namespace CXMineServer
 			return gram;
 		}
 
-		private const int PendingCap = 96 * 1024;
+		private const int PendingCap = 140 * 1024;
 
 		public Gram Enqueue( byte[] buffer, int length ) {
 			return Enqueue( buffer, 0, length );

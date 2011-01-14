@@ -154,10 +154,14 @@ namespace CXMineServer
 						{
 							int length = buffer.Length;
 
-							while (length > 0)
+							while (length > 0 && ns.Running)
 							{
+								CXMineServer.ReceiveLogFile("Current buffer: " + BitConverter.ToString(buffer.UnderlyingBuffer, buffer.Head, buffer.Size) + "\r\n");
+								CXMineServer.ReceiveLogFile("Head: " + buffer.Head + " Tail: " + buffer.Tail + " Size: " + buffer.Size + "\r\n");
 								int packetID = buffer.GetPacketID();
-								PacketHandler handler = PacketHandlers.GetHandler((PacketType)packetID);
+								PacketType type = (PacketType)packetID;
+								CXMineServer.ReceiveLogFile(type.ToString() + ": ");
+								PacketHandler handler = PacketHandlers.GetHandler(type);
 
 								CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
 								byte[] data;
@@ -179,37 +183,65 @@ namespace CXMineServer
 
 								if (handler.Length == 0)
 								{
-									packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.UnderlyingBuffer.Length);
-									handler.OnReceive(ns, packetReader);
+									if (length >= handler.MinimumLength)
+									{
+										packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.Length);
+										handler.OnReceive(ns, packetReader);
 
-									data = new byte[packetReader.Index + 1];
+										data = new byte[packetReader.Index];
 
-									if (!packetReader.Failed)
-										buffer.Dequeue(data, 0, packetReader.Index);
+										if (!packetReader.Failed)
+										{
+											buffer.Dequeue(data, 0, packetReader.Index);
+											CXMineServer.ReceiveLogFile("Dequeued: " + packetReader.Index + " ");
+											CXMineServer.ReceiveLogFile("Complete \r\n");
+											length = buffer.Length;
+										}
+										else
+										{
+											CXMineServer.ReceiveLogFile("Packet not complete \r\n");
+											length = 0;
+										}
+									}
+									else
+									{
+										CXMineServer.ReceiveLogFile("Not enough data \r\n");
+										length = 0;
+									}
+
 								}
-								else
+								else if (length >= handler.Length)
 								{
 									data = new byte[handler.Length];
 									int packetLength = buffer.Dequeue(data, 0, handler.Length);
-
+									CXMineServer.ReceiveLogFile("Dequeued: " + packetLength + " ");
 									packetReader = new PacketReader(data, packetLength);
 									handler.OnReceive(ns, packetReader);
 
 									if (packetReader.Failed)
 										ns.Disconnect();
-								}
 
-								length = buffer.Length;
+									CXMineServer.ReceiveLogFile("Complete \r\n");
+
+									length = buffer.Length;
+								}
+								else
+								{
+									CXMineServer.ReceiveLogFile("Not enough data \r\n");
+									length = 0;
+								}
 							}
 						}
 					}
 				}
-				/*// Check for new connections
-				while (_Listener.Pending()) {
-					AcceptConnection(_Listener.AcceptTcpClient());
-				}*/
-				
-				//Thread.Sleep(100);
+
+				lock(playerList)
+				{
+					for (int i = 0; i < playerList.Count; ++i)
+					{
+						playerList[i].State.Flush();
+					}
+				}
 			}
 			
 			World.ForceSave();
@@ -233,6 +265,12 @@ namespace CXMineServer
 			foreach(Player p in PlayerList) {
 				p.SendMessage(message);
 			}
+		}
+
+		public void AddPlayer(Player player)
+		{
+			lock(playerList)
+				playerList.Add(player);
 		}
 
 		public void Quit()
