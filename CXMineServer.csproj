@@ -79,6 +79,8 @@
     <Compile Include="Network\PacketWriter.cs" />
     <Compile Include="Network\SendQueue.cs" />
     <Compile Include="Network\SocketAsyncEventArgsPool.cs" />
+    <Compile Include="Timer.cs" />
+    <Compile Include="TimerThread.cs" />
     <Compile Include="Utils\Configuration.cs" />
     <Compile Include="Utils\NBT.cs" />
     <Compile Include="Server.cs" />

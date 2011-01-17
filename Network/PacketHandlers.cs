@@ -45,7 +45,10 @@ namespace CXMineServer
 			Register(PacketType.Handshake, 0, 3, new OnPacketReceive(ReadHandshake));
 			Register(PacketType.LoginDetails, 0, 18, new OnPacketReceive(ReadLoginDetails));
 			Register(PacketType.KeepAlive, 1, 0, new OnPacketReceive(ReadKeepAlive));
+			Register(PacketType.Player, 2, 0, new OnPacketReceive(ReadPlayer));
+			Register(PacketType.PlayerPosition, 34, 0, new OnPacketReceive(ReadPlayerPosition));
 			Register(PacketType.PlayerPositionLook, 42, 0, new OnPacketReceive(ReadPlayerPositionLook));
+			
 		}
 
 		public static void Register(PacketType packetID, int length, int minimumLength, OnPacketReceive onReceive)
@@ -124,6 +127,11 @@ namespace CXMineServer
 			ns.Login();
 		}
 
+		public static void ReadPlayer(NetState ns, PacketReader packetReader)
+		{
+			byte extra = packetReader.ReadByte();
+		}
+
 		public static void ReadPlayerBlockPlace(NetState ns, PacketReader packetReader)
 		{
 			int x = packetReader.ReadInt32();
@@ -162,6 +170,20 @@ namespace CXMineServer
 				return;
 
 			CXMineServer.Log("Received Player Inventory Packet");
+		}
+
+		public static void ReadPlayerPosition(NetState ns, PacketReader packetReader)
+		{
+			double x = packetReader.ReadDouble();
+			double stance = packetReader.ReadDouble();
+			double y = packetReader.ReadDouble();
+			double z = packetReader.ReadDouble();
+
+			ns.Owner.X = x;
+			ns.Owner.Y = y;
+			ns.Owner.Z = z;
+
+			bool onGround = packetReader.ReadBool();
 		}
 
 		public static void ReadPlayerPositionLook(NetState ns, PacketReader packetReader)

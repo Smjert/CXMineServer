@@ -191,8 +191,7 @@ namespace CXMineServer
 
 			byte[] buffer = p.GetBuffer();
 			CXMineServer.SendLogFile(BitConverter.ToString(buffer, 0, p.Length) + "\r\n");
-			//Connection.Send(buffer, p.Length, SocketFlags.None);
-			stream.Write(buffer, 0, p.Length);
+			Connection.Send(buffer, p.Length, SocketFlags.None);
 			CXMineServer.SendLogFile("Sent\r\n\r\n");
 
 			//Thread.Sleep(1000);
@@ -265,7 +264,9 @@ namespace CXMineServer
 				if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
 				{
 					CXMineServer.Log("Received packet size: " + e.BytesTransferred.ToString());
-					lock (Buffer)
+					CXMineServer.ReceiveLogFile("Received packet size: " + e.BytesTransferred.ToString() + "\r\n");
+
+					lock (_Buffer)
 						_Buffer.Enqueue(e.Buffer, 0, e.BytesTransferred);
 
 					lock (CXMineServer.Server.Queue)

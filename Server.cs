@@ -75,7 +75,7 @@ namespace CXMineServer
 		
 		private Listener _Listener;
 
-        private static int EID = 0;
+    private static int EID = 0;
 		
 		public Server()
 		{
@@ -133,107 +133,110 @@ namespace CXMineServer
 			
 			CXMineServer.Log("Listening on port " + Port);
 			Running = true;
+
+			TimerThread.Start();
 			
 			while (_Signal.WaitOne()) {
 
-				if(queue != null && queue.Count > 0)
+				CXMineServer.ReceiveLogFile("Loop");
+				lock (queue)
 				{
-					lock (queue)
-					{
-						Queue<NetState> tmp = currentQueue;
-						currentQueue = queue;
-						queue = tmp;
-					}
+					Queue<NetState> tmp = currentQueue;
+					currentQueue = queue;
+					queue = tmp;
+				}
 
-					for (int i = 0; i < currentQueue.Count; ++i)
-					{
-						NetState ns = currentQueue.Dequeue();
-						ByteQueue buffer = ns.Buffer;
+				for (int i = 0; i < currentQueue.Count; ++i)
+				{
+					NetState ns = currentQueue.Dequeue();
+					ByteQueue buffer = ns.Buffer;
 
-						lock (buffer)
+					lock (buffer)
+					{
+						int length = buffer.Length;
+
+						while (length > 0 && ns.Running)
 						{
-							int length = buffer.Length;
+							CXMineServer.ReceiveLogFile("Current buffer: " + BitConverter.ToString(buffer.UnderlyingBuffer, buffer.Head, buffer.Size) + "\r\n");
+							CXMineServer.ReceiveLogFile("Head: " + buffer.Head + " Tail: " + buffer.Tail + " Size: " + buffer.Size + "\r\n");
+							int packetID = buffer.GetPacketID();
+							PacketType type = (PacketType)packetID;
+							CXMineServer.ReceiveLogFile(type.ToString() + ": ");
+							PacketHandler handler = PacketHandlers.GetHandler(type);
 
-							while (length > 0 && ns.Running)
+							CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
+							byte[] data;
+
+							if (handler == null)
 							{
-								CXMineServer.ReceiveLogFile("Current buffer: " + BitConverter.ToString(buffer.UnderlyingBuffer, buffer.Head, buffer.Size) + "\r\n");
-								CXMineServer.ReceiveLogFile("Head: " + buffer.Head + " Tail: " + buffer.Tail + " Size: " + buffer.Size + "\r\n");
-								int packetID = buffer.GetPacketID();
-								PacketType type = (PacketType)packetID;
-								CXMineServer.ReceiveLogFile(type.ToString() + ": ");
-								PacketHandler handler = PacketHandlers.GetHandler(type);
+								data = new byte[length];
+								length = buffer.Dequeue(data, 0, length);
 
-								CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
-								byte[] data;
+								CXMineServer.Log("Unhandled packet arrived");
+								CXMineServer.ReceiveLogFile("Unhandled packet arrived");
 
-								if (handler == null)
+								break;
+							}
+
+							if (buffer.UnderlyingBuffer.Length > 2048)
+								ns.Disconnect();
+
+							PacketReader packetReader;
+
+							if (handler.Length == 0)
+							{
+								if (length >= handler.MinimumLength)
 								{
-									data = new byte[length];
-									length = buffer.Dequeue(data, 0, length);
+									packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.Length);
+									handler.OnReceive(ns, packetReader);
 
-									CXMineServer.Log("Unhandled packet arrived");
+									data = new byte[packetReader.Index];
 
-									break;
-								}
-
-								if (buffer.UnderlyingBuffer.Length > 2048)
-									ns.Disconnect();
-
-								PacketReader packetReader;
-
-								if (handler.Length == 0)
-								{
-									if (length >= handler.MinimumLength)
+									if (!packetReader.Failed)
 									{
-										packetReader = new PacketReader(buffer.UnderlyingBuffer, buffer.Length);
-										handler.OnReceive(ns, packetReader);
-
-										data = new byte[packetReader.Index];
-
-										if (!packetReader.Failed)
-										{
-											buffer.Dequeue(data, 0, packetReader.Index);
-											CXMineServer.ReceiveLogFile("Dequeued: " + packetReader.Index + " ");
-											CXMineServer.ReceiveLogFile("Complete \r\n");
-											length = buffer.Length;
-										}
-										else
-										{
-											CXMineServer.ReceiveLogFile("Packet not complete \r\n");
-											length = 0;
-										}
+										buffer.Dequeue(data, 0, packetReader.Index);
+										CXMineServer.ReceiveLogFile("Dequeued: " + packetReader.Index + " ");
+										CXMineServer.ReceiveLogFile("Complete \r\n");
+										length = buffer.Length;
 									}
 									else
 									{
-										CXMineServer.ReceiveLogFile("Not enough data \r\n");
+										CXMineServer.ReceiveLogFile("Packet not complete \r\n");
 										length = 0;
 									}
-
-								}
-								else if (length >= handler.Length)
-								{
-									data = new byte[handler.Length];
-									int packetLength = buffer.Dequeue(data, 0, handler.Length);
-									CXMineServer.ReceiveLogFile("Dequeued: " + packetLength + " ");
-									packetReader = new PacketReader(data, packetLength);
-									handler.OnReceive(ns, packetReader);
-
-									if (packetReader.Failed)
-										ns.Disconnect();
-
-									CXMineServer.ReceiveLogFile("Complete \r\n");
-
-									length = buffer.Length;
 								}
 								else
 								{
 									CXMineServer.ReceiveLogFile("Not enough data \r\n");
 									length = 0;
 								}
+
+							}
+							else if (length >= handler.Length)
+							{
+								data = new byte[handler.Length];
+								int packetLength = buffer.Dequeue(data, 0, handler.Length);
+								CXMineServer.ReceiveLogFile("Dequeued: " + packetLength + " ");
+								packetReader = new PacketReader(data, packetLength);
+								handler.OnReceive(ns, packetReader);
+
+								if (packetReader.Failed)
+									ns.Disconnect();
+
+								CXMineServer.ReceiveLogFile("Complete \r\n");
+
+								length = buffer.Length;
+							}
+							else
+							{
+								CXMineServer.ReceiveLogFile("Not enough data \r\n");
+								length = 0;
 							}
 						}
 					}
 				}
+
+				Timer.Slice();
 
 				lock(playerList)
 				{

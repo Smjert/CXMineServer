@@ -57,12 +57,15 @@ namespace CXMineServer
 
 		public static void ReceiveLogFile(string message)
 		{
-			if(receiveFile == null)
-				receiveFile = new StreamWriter("receive.txt");
+			lock(receiveFile)
+			{
+				if (receiveFile == null)
+					receiveFile = new StreamWriter("receive.txt");
 
-			receiveFile.Write(message);
+				receiveFile.Write(message);
 
-			receiveFile.Flush();
+				receiveFile.Flush();
+			}
 		}
 
 		public static void SendLogFile(string message)
