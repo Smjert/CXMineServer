@@ -15,6 +15,7 @@ namespace CXMineServer
 
 		private static StreamWriter receiveFile;
 		private static StreamWriter sendFile;
+		private static StreamWriter errorFile;
 		
 		public static void Main(string[] args)
 		{
@@ -36,6 +37,7 @@ namespace CXMineServer
 			}
 			catch (Exception e) {
 				Log("Fatal uncaught exception: " + e);
+				ErrorLog("Fatal uncaught exception: " + e);
 				Console.ReadLine();
 			}
 			receiveFile.Close();
@@ -48,6 +50,16 @@ namespace CXMineServer
 
 			Log("Bye!");
 			Console.ReadLine();
+		}
+
+		public static void ErrorLog(string message)
+		{
+			if (errorFile == null)
+				errorFile = new StreamWriter("error.txt");
+
+			errorFile.Write(message);
+
+			errorFile.Flush();
 		}
 		
 		public static void Log(string message)

@@ -215,6 +215,8 @@ namespace CXMineServer
 		public string Username = "";
 		public bool Spawned;
 
+		
+
 		private List<Chunk> visibleChunks = new List<Chunk>();
 		public IEnumerable<Chunk> VisibleChunks
 		{
@@ -260,9 +262,7 @@ namespace CXMineServer
 			CXMineServer.Log("Inventory Loaded");
 			Update();
 			_State.SpawnPosition((int)X, (int)Y, (int)Z);
-			_State.PlayerPositionLook(X, Y, Z, Yaw, Pitch, 1);
-
-			_UpdateTimer.Start();
+			_State.PlayerPositionLook(X, 0.0, Y, Z, Yaw, Pitch, 1);
 		}
 
 		public void Despawn()
@@ -305,9 +305,9 @@ namespace CXMineServer
 																		(short)(byte)_inventory[i]["Count"].Payload,
 																		(short)_inventory[i]["Damage"].Payload);
 						// Converting from player's .dat inventory slot to game's inventory slot
-						_State.SetSlot((byte)0, realSlot,
-													 _inventory[i]["id"].Payload,
-													 _inventory[i]["Count"].Payload,
+						_State.SetSlot(0, realSlot,
+													 (short)_inventory[i]["id"].Payload,
+													 (byte)_inventory[i]["Count"].Payload,
 													 (short)_inventory[i]["Damage"].Payload);
 					}
 				}
@@ -385,9 +385,28 @@ namespace CXMineServer
 			}
 			VisibleEntities = newVisibleEntities;
 
-			_State.TimeUpdate(CXMineServer.Server.World.Time);
+			CalculateTime();
+
+			if (_UpdateTimer.Running)
+				_UpdateTimer.Stop();
+
+			_UpdateTimer.Start();
+
+			CXMineServer.SendLogFile(DateTime.Now + " Update");
 
 			base.Update();
+		}
+
+		private void CalculateTime()
+		{
+			TimeSpan timePassed = DateTime.Now - CXMineServer.Server.LastUpdateTime;
+			CXMineServer.Server.MinecraftTime += (long)(20.0 * timePassed.TotalSeconds);
+
+			if (CXMineServer.Server.MinecraftTime > 24000)
+				CXMineServer.Server.MinecraftTime -= 24000;
+
+			CXMineServer.Server.LastUpdateTime = DateTime.Now;
+			_State.TimeUpdate(CXMineServer.Server.MinecraftTime);
 		}
 
 		private void DespawnEntity(Entity e)
@@ -425,7 +444,7 @@ namespace CXMineServer
 		public class UpdateTimer : Timer
 		{
 			private Player _Player;
-			public UpdateTimer(Player player) : base(TimeSpan.FromSeconds(2.0), false)
+			public UpdateTimer(Player player) : base(TimeSpan.FromSeconds(2.0), true)
 			{
 				_Player = player;
 			}

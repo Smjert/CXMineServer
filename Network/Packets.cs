@@ -4,10 +4,16 @@ using System.Text;
 
 namespace CXMineServer
 {
-	public class KeepAlive : Packet
+
+	public class BlockChange : Packet
 	{
-		public KeepAlive() : base (PacketType.KeepAlive, 1)
+		public BlockChange(int x, byte y, int z, byte id, byte metadata) : base(PacketType.BlockChange, 12)
 		{
+			_Writer.Write(x);
+			_Writer.Write(y);
+			_Writer.Write(z);
+			_Writer.Write(id); 
+			_Writer.Write(metadata);
 		}
 	}
 
@@ -26,6 +32,14 @@ namespace CXMineServer
 			SetCapacity(3, hash);
 
 			_Writer.WriteString(_Strings[0]);
+		}
+	}
+
+	public class KeepAlive : Packet
+	{
+		public KeepAlive()
+			: base(PacketType.KeepAlive, 1)
+		{
 		}
 	}
 
@@ -74,7 +88,7 @@ namespace CXMineServer
 
 	public class NamedEntitySpawn : Packet
 	{
-		public NamedEntitySpawn(int entityId, string userName, int x, int y, int z, byte extra1, byte extra2, short holdingPos) : base(PacketType.NamedEntitySpawn)
+		public NamedEntitySpawn(int entityId, string userName, int x, int y, int z, byte rotation, byte pitch, short holdingPos) : base(PacketType.NamedEntitySpawn)
 		{
 			SetCapacity(23, userName);
 
@@ -83,17 +97,23 @@ namespace CXMineServer
 			_Writer.Write(x);
 			_Writer.Write(y);
 			_Writer.Write(z);
-			_Writer.Write(extra1);
-			_Writer.Write(extra2);
+			_Writer.Write(rotation);
+			_Writer.Write(pitch);
 			_Writer.Write(holdingPos);
 		}
 	}
 
+	/*public class PickupSpawn : Packet
+	{
+		public PickupSpawn(PacketType.)
+	}*/
+
 	public class PlayerPositionLook : Packet
 	{
-		public PlayerPositionLook(double x, double y, double z, float yaw, float pitch, byte extra) : base(PacketType.PlayerPositionLook, 34)
+		public PlayerPositionLook(double x, double y, double stance, double z, float yaw, float pitch, byte extra) : base(PacketType.PlayerPositionLook, 42)
 		{
 			_Writer.Write(x);
+			_Writer.Write(stance);
 			_Writer.Write(y);
 			_Writer.Write(z);
 			_Writer.Write(yaw);
@@ -112,15 +132,25 @@ namespace CXMineServer
 		}
 	}
 
-	public class SetSlot : Packet
+	public class SetSlotAdd : Packet
 	{
-		public SetSlot(byte extra, short slot, short idPayload, byte countPayload, short damage) : base(PacketType.SetSlot, 9)
+		public SetSlotAdd(byte extra, short slot, short idPayload, byte countPayload, short damage) : base(PacketType.SetSlot, 9)
 		{
 			_Writer.Write(extra);
 			_Writer.Write(slot);
 			_Writer.Write(idPayload);
 			_Writer.Write(countPayload);
 			_Writer.Write(damage);
+		}
+	}
+
+	public class SetSlotRemove : Packet
+	{
+		public SetSlotRemove(byte extra, short slot, short idPayload): base(PacketType.SetSlot, 6)
+		{
+			_Writer.Write(extra);
+			_Writer.Write(slot);
+			_Writer.Write(idPayload);
 		}
 	}
 

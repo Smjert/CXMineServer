@@ -98,12 +98,20 @@ namespace CXMineServer
 
 		public void Write(float value)
 		{
-			_Stream.Write(BitConverter.GetBytes(value), 0, 4);
+			byte[] bytes = BitConverter.GetBytes(value);
+
+			Array.Reverse(bytes, 0, 4);
+
+			_Stream.Write(bytes, 0, 4);
 		}
 
 		public void Write(double value)
 		{
-			_Stream.Write(BitConverter.GetBytes(value), 0, 8);
+			byte[] bytes = BitConverter.GetBytes(value);
+
+			Array.Reverse(bytes, 0, 8);
+
+			_Stream.Write(bytes, 0, 8);
 		}
 
 		public void WriteString(byte[] value)

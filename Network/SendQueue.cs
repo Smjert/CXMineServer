@@ -175,7 +175,7 @@ namespace CXMineServer
 			return gram;
 		}
 
-		private const int PendingCap = 512 * 1024;
+		private const int PendingCap = 2048 * 1024;
 
 		public Gram Enqueue( byte[] buffer, int length ) {
 			return Enqueue( buffer, 0, length );

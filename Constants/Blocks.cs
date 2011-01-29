@@ -2,7 +2,62 @@ using System;
 
 namespace CXMineServer
 {
-	public enum Block
+	public class Block
+	{
+		private byte _X;
+		private byte _Y;
+		private byte _Z;
+
+		public byte X
+		{
+			get { return _X; }
+		}
+		public byte Y
+		{
+			get { return _Y; }
+		}
+		public byte Z
+		{
+			get { return _Z; }
+		}
+		public Block(byte x, byte y, byte z)
+		{
+
+		}
+	}
+
+	public class BlockLine
+	{
+		private byte _X;
+		private byte _Y;
+		private byte _Z;
+
+		private int _Counter;
+
+		public int Counter
+		{
+			get { return _Counter; }
+			set { _Counter = value; }
+		}
+
+		public byte X
+		{
+			get { return _X; }
+		}
+		public byte Y
+		{
+			get { return _Y; }
+		}
+		public byte Z
+		{
+			get { return _Z; }
+		}
+		public BlockLine(byte x, byte y, byte z)
+		{
+
+		}
+	}
+	public enum BlockType
 	{
 		Air = 0,
 		Rock = 1,

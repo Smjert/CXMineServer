@@ -36,30 +36,38 @@ namespace CXMineServer
 
 		public static void AddTimer(Timer t)
 		{
-			_ToAdd.Enqueue(t);
+			_ToAdd.Enqueue(new TimerEntry(t, false));
 			_Signal.Set();
 		}
 
 		public static void RemoveTimer(Timer t)
 		{
+			_ToAdd.Enqueue(new TimerEntry(t, true));
+			_Signal.Set();
 		}
 
 		private static void Run()
 		{
 			while(true)
 			{
+
+				bool loaded = false;
 				ProcessNewTimers();
 
 				for (int i = 0; i < _Timers.Count; ++i)
 				{
 					if (_Timers[i].NextTick <= DateTime.Now)
 					{
+						loaded = true;
 						Timer.Tick(_Timers[i]);
 
 						if (_Timers[i].OneTick)
 							_Timers.RemoveAt(i);
 					}
 				}
+
+				if(loaded)
+					CXMineServer.Server.Signal();
 
 				_Signal.WaitOne(50, false);
 			}
@@ -69,8 +77,33 @@ namespace CXMineServer
 		{
 			if(_ToAdd.Count > 0)
 			{
-				Timer t = _ToAdd.Dequeue() as Timer;
-				_Timers.Add(t);
+				TimerEntry te = _ToAdd.Dequeue() as TimerEntry;
+
+				if (!te.ToRemove)
+					_Timers.Add(te.Timer);
+				else
+					_Timers.Remove(te.Timer);
+			}
+		}
+
+		private class TimerEntry
+		{
+			private Timer _Timer;
+			public Timer Timer
+			{
+				get { return _Timer; }
+			}
+
+			private bool _ToRemove;
+			public bool ToRemove
+			{
+				get { return _ToRemove; }
+			}
+
+			public TimerEntry(Timer t, bool toRemove)
+			{
+				_Timer = t;
+				_ToRemove = toRemove;
 			}
 		}
 	}

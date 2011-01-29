@@ -75,7 +75,23 @@ namespace CXMineServer
 		
 		private Listener _Listener;
 
-    private static int EID = 0;
+		private static int EID = 0;
+
+		private DateTime _LastUpdateTime;
+
+		public DateTime LastUpdateTime
+		{
+			get { return _LastUpdateTime; }
+			set { _LastUpdateTime = value; }
+		}
+
+		private long _MinecraftTime;
+
+		public long MinecraftTime
+		{
+			get { return _MinecraftTime; }
+			set { _MinecraftTime = value; }
+		}
 		
 		public Server()
 		{
@@ -96,6 +112,7 @@ namespace CXMineServer
 
 			queue = new Queue<NetState>();
 			currentQueue = new Queue<NetState>();
+			_LastUpdateTime = DateTime.Now;
 		}
 
 		public void Signal()
@@ -114,6 +131,8 @@ namespace CXMineServer
 				World.ForceSave();*/
 				return;
 			}
+
+			_MinecraftTime = CXMineServer.Server.World.Time;
 
 			for (int i = 0; i < 50; ++i)
 			{
@@ -174,6 +193,10 @@ namespace CXMineServer
 
 								CXMineServer.Log("Unhandled packet arrived");
 								CXMineServer.ReceiveLogFile("Unhandled packet arrived");
+
+								ns.Dispose();
+
+								Console.ReadLine();
 
 								break;
 							}

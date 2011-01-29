@@ -44,26 +44,22 @@ namespace CXMineServer
 			get { return _Running; }
 		}
 
+		public DateTime LastKeepAlive = DateTime.Now;
+
+		private KeepAliveTimer _KeepAliveTimer;
+
 		public NetState()
 		{
 			_Buffer = new ByteQueue();
 			_RecvBuffer = _ReceiveBufferPool.AcquireBuffer();
 			_SendQueue = new SendQueue();
+			_KeepAliveTimer = new KeepAliveTimer(this);
 			//_Owner = player;
 		}
 
-		public void Login()
+		public void BlockChange(int x, byte y, int z, byte id, byte metadata)
 		{
-			CXMineServer.SendLogFile("Sending: Login \r\n");
-			Send(new LoginDetails(_Owner.EntityID, CXMineServer.Server.Name, CXMineServer.Server.Motd));
-
-			_Owner.Spawn();
-		}
-
-		public void Handshake()
-		{
-			CXMineServer.SendLogFile("Sending: Handshake \r\n");
-			Send(new Handshake(CXMineServer.Server.ServerHash));
+			Send(new BlockChange(x, y, z, id, metadata));
 		}
 
 		public void DestroyEntity(int entityId)
@@ -73,13 +69,30 @@ namespace CXMineServer
 
 		public void Disconnect()
 		{
-			_Running = false;
+			// Send synched disconnect, with timeout
+			Dispose();
+		}
+
+		public void Handshake()
+		{
+			CXMineServer.SendLogFile("Sending: Handshake \r\n");
+			Send(new Handshake(CXMineServer.Server.ServerHash));
 		}
 
 		public void KeepAlive()
 		{
 			CXMineServer.SendLogFile("Sending: KeepAlive \r\n");
+			LastKeepAlive = DateTime.Now;
 			Send(new KeepAlive());
+		}
+
+		public void Login()
+		{
+			CXMineServer.SendLogFile("Sending: Login \r\n");
+			Send(new LoginDetails(_Owner.EntityID, CXMineServer.Server.Name, CXMineServer.Server.Motd));
+
+			_KeepAliveTimer.Start();
+			_Owner.Spawn();
 		}
 
 		public void Message(string message)
@@ -92,9 +105,9 @@ namespace CXMineServer
 			Send(new NamedEntitySpawn(entityId, userName, x, y, z, extra1, extra2, holdingPos));
 		}
 
-		public void PlayerPositionLook(double x, double y, double z, float yaw, float pitch, byte extra)
+		public void PlayerPositionLook(double x, double y, double stance, double z, float yaw, float pitch, byte extra)
 		{
-			Send(new PlayerPositionLook(x, y, z, yaw, pitch, extra));
+			Send(new PlayerPositionLook(x, y, stance, z, yaw, pitch, extra));
 		}
 
 		public void PreChunk(int chunkX, int chunkZ, byte extra)
@@ -103,10 +116,16 @@ namespace CXMineServer
 			Send(new PreChunk(chunkX, chunkZ, extra));
 		}
 
-		public void SetSlot(byte extra, short slot, object idPayload, object countPayload, short damage)
+		public void SetSlot(byte extra, short slot, short idPayload, byte countPayload, short damage)
 		{
-			CXMineServer.SendLogFile("Sending: SetSlot" + "\r\n");
-			Send(new SetSlot(extra, slot, (short)idPayload, (byte)countPayload, damage));
+			CXMineServer.SendLogFile("Sending: SetSlotAdd" + "\r\n");
+			Send(new SetSlotAdd(extra, slot, idPayload, countPayload, damage));
+		}
+
+		public void SetSlot(byte extra, short slot, short idPayload)
+		{
+			CXMineServer.SendLogFile("Sending: SetSlotRemove" + "\r\n");
+			Send(new SetSlotRemove(extra, slot, idPayload));
 		}
 
 		public void SendChunk(Chunk c)
@@ -245,15 +264,28 @@ namespace CXMineServer
 
 		public void Receive_Start()
 		{
-			lock(_PendingLock)
+			try
 			{
-				if(!Pending)
+				bool willRaiseEvent = false;
+
+				do
 				{
-					Pending = true;
-					bool willRaiseEvent = Connection.ReceiveAsync(_SocketAsyncEventOnReceive);
-					if (!willRaiseEvent)
+					lock(_PendingLock)
+					{	
+						if(!Pending)
+						{
+							willRaiseEvent = !Connection.ReceiveAsync(_SocketAsyncEventOnReceive);
+							Pending = true;
+						}
+					}
+					if (willRaiseEvent)
 						Process_Receive(_SocketAsyncEventOnReceive);
-				}
+				} while (willRaiseEvent);
+			}
+			catch (System.Exception ex)
+			{
+				CXMineServer.Log(ex.Message + ex.Source + "\n" + ex.StackTrace);
+				Console.ReadLine();
 			}
 		}
 
@@ -272,6 +304,9 @@ namespace CXMineServer
 					lock (CXMineServer.Server.Queue)
 						CXMineServer.Server.Queue.Enqueue(this);
 
+					lock(_PendingLock)
+						Pending = false;
+
 					CXMineServer.Server.Signal();
 				}
 			}
@@ -280,9 +315,6 @@ namespace CXMineServer
 				CXMineServer.Log(ex.Message + ex.Source + "\n" + ex.StackTrace);
 				Console.ReadLine();
 			}
-
-			lock(_PendingLock)
-				Pending = false;
 		}
 
 		public void OnReceive(object sender, SocketAsyncEventArgs e)
@@ -333,15 +365,38 @@ namespace CXMineServer
 				return;
 
 			_Disposing = true;
+			_Running = false;
 			Connection.Shutdown(SocketShutdown.Both);
 			Connection.Close();
 
-			_Running = false;
-
 			_ReceiveBufferPool.ReleaseBuffer(_RecvBuffer);
+
+			Server.ReadPool.Push(_SocketAsyncEventOnReceive);
+			Server.WritePool.Push(_SocketAsyncEventOnSend);
+			_KeepAliveTimer.Stop();
 
 			lock (_SendQueue)
 				_SendQueue.Clear();
+
+			lock (_Buffer)
+				_Buffer.Clear();
+		}
+	}
+
+	public class KeepAliveTimer : Timer
+	{
+		private NetState _NetState;
+		public KeepAliveTimer(NetState ns) : base(TimeSpan.FromSeconds(2.0), false)
+		{
+			_NetState = ns;
+		}
+
+		protected override void OnTick()
+		{
+			if ((_NetState.LastKeepAlive + TimeSpan.FromSeconds(10.0)) <= DateTime.Now)
+				_NetState.KeepAlive();
+
+			base.OnTick();
 		}
 	}
 }

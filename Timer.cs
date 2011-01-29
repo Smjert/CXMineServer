@@ -20,27 +20,37 @@ namespace CXMineServer
 
 		public bool OneTick;
 
+		private bool _Running;
+
+		public bool Running
+		{
+			get { return _Running; }
+		}
+
 		public Timer(TimeSpan nextTick, bool oneTick)
 		{
-			_NextTick = DateTime.Now + nextTick;
 			_Delay = nextTick;
 			OneTick = false;
+			_Running = false;
 		}
 
 		public void Start()
 		{
+			_Running = true;
+			_NextTick = DateTime.Now + _Delay;
 			TimerThread.AddTimer(this);
 		}
 
 		public void Stop()
 		{
+			_Running = false;
 			TimerThread.RemoveTimer(this);
 		}
 
 		protected virtual void OnTick()
 		{
-			if(_NextTick != null)
-				_NextTick += _Delay;
+			if(_NextTick != null && !OneTick)
+				_NextTick = DateTime.Now + _Delay;
 		}
 
 		public static void Slice()
@@ -56,8 +66,6 @@ namespace CXMineServer
 		{
 			lock(ToTick)
 				ToTick.Enqueue(t);
-
-			CXMineServer.Server.Signal();
 		}
 	}
 }

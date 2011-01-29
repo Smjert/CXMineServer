@@ -88,6 +88,8 @@ namespace CXMineServer
 			if ((m_Index + 4) > m_Size)
 				return 0.0f;
 
+			Array.Reverse(m_Data, m_Index, 4);
+
 			float result = BitConverter.ToSingle(m_Data, m_Index);
 			m_Index += 4;
 
@@ -98,6 +100,8 @@ namespace CXMineServer
 		{
 			if ((m_Index + 8) > m_Size)
 				return 0.0;
+
+			Array.Reverse(m_Data, m_Index, 8);
 
 			double result = BitConverter.ToDouble(m_Data, m_Index);
 			m_Index += 8;
