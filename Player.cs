@@ -98,19 +98,21 @@ namespace CXMineServer
 
 			if (slot == -1)
 				return -1;
-            if (slotList[slot].Id == (short)-1)
-            {
-                CXMineServer.Log("Adding id " + id);
-                AddToPosition(slot, id, 1, 0);
-            }
-            else
-                slotList[slot].Count += 1;
-            return slot;
+
+			AddToPosition(slot, id, 1, 0);
+
+			return slot;
 		}
 
 		public void AddToPosition(int position, short id, short count, short uses)
 		{
-            slotList[position] = new Slot(this, count, id, uses, position);
+			if (slotList[position].Id == -1)
+			{
+				CXMineServer.Log("Adding id " + id);
+				slotList[position] = new Slot(this, count, id, uses, position);
+			}
+			else
+				slotList[position].Count += 1;
 		}
 
 		public void Remove(int position, int quantity = 1)
@@ -168,11 +170,6 @@ namespace CXMineServer
 		private int GetFirstAvailableSlotFor(short id)
 		{
 			// TODO: non dovresti controllare che ci siano meno di 64 item nello slot?
-            for (short i = 0; i < slotList.Capacity; i++ )
-            {
-                if (slotList[i].Id == id)
-                    return i;
-            }
 
 			/* First we control if there's already the same block type on the quickbar or if there's a free slot.
 			 * If nothing is found we check the internal inventory */
@@ -400,7 +397,6 @@ namespace CXMineServer
 
 			CXMineServer.SendLogFile(DateTime.Now + " Update");
 
-			_State.TimeUpdate(CXMineServer.Server.World.Time);
 			base.Update();
 		}
 

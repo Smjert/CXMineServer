@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using System;
 
 namespace CXMineServer
@@ -72,7 +73,7 @@ namespace CXMineServer
 
 		private static AutoResetEvent _Signal = new AutoResetEvent(true);
 		
-		private TcpListener _Listener;
+		private Listener _Listener;
 
 		private static int EID = 0;
 
@@ -112,6 +113,11 @@ namespace CXMineServer
 			queue = new Queue<NetState>();
 			currentQueue = new Queue<NetState>();
 			_LastUpdateTime = DateTime.Now;
+		}
+
+		public void Signal()
+		{
+			_Signal.Set();
 		}
 		
 		public void Run()
@@ -296,6 +302,11 @@ namespace CXMineServer
 		public void Quit()
 		{
 			Running = false;
+
+			for(int i = playerList.Count - 1; i >= 0; --i)
+				playerList[i].State.Disconnect();
+
+			playerList.Clear();
 		}
 
         public static int getEID()
