@@ -183,7 +183,7 @@ namespace CXMineServer
 							CXMineServer.ReceiveLogFile(type.ToString() + ": ");
 							PacketHandler handler = PacketHandlers.GetHandler(type);
 
-							CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
+							//CXMineServer.Log("arrived: " + ((PacketType)packetID).ToString());
 							byte[] data;
 
 							if (handler == null)

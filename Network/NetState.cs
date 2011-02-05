@@ -57,6 +57,18 @@ namespace CXMineServer
 			//_Owner = player;
 		}
 
+		public void CollectItem(int itemEId, int playerEId, short block)
+		{
+			Send(new CollectItem(itemEId, playerEId));
+			foreach (Player p in CXMineServer.Server.PlayerList)
+			{
+				p.State.DestroyEntity(itemEId);
+			}
+
+			short slot = (short)Owner.inventory.Add(block);
+			Send(new SetSlotAdd(0, slot, block, (byte)Owner.inventory.GetItem(slot).Count, 0));
+		}
+
 		public void BlockChange(int x, byte y, int z, byte id, byte metadata)
 		{
 			Send(new BlockChange(x, y, z, id, metadata));
@@ -103,6 +115,11 @@ namespace CXMineServer
 		public void NamedEntitySpawn(int entityId, string userName, int x, int y, int z, byte extra1, byte extra2, short holdingPos)
 		{
 			Send(new NamedEntitySpawn(entityId, userName, x, y, z, extra1, extra2, holdingPos));
+		}
+
+		public void PickupSpawn(int eid, short block, byte count, short damage, int x, int y, int z, byte rotation, byte pitch, byte roll)
+		{
+			Send(new PickupSpawn(eid, block, count, damage, x, y, z, rotation, pitch, roll));
 		}
 
 		public void PlayerPositionLook(double x, double y, double stance, double z, float yaw, float pitch, byte extra)
@@ -295,8 +312,8 @@ namespace CXMineServer
 			{
 				if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
 				{
-					CXMineServer.Log("Received packet size: " + e.BytesTransferred.ToString());
-					CXMineServer.ReceiveLogFile("Received packet size: " + e.BytesTransferred.ToString() + "\r\n");
+					/*CXMineServer.Log("Received packet size: " + e.BytesTransferred.ToString());
+					CXMineServer.ReceiveLogFile("Received packet size: " + e.BytesTransferred.ToString() + "\r\n");*/
 
 					lock (_Buffer)
 						_Buffer.Enqueue(e.Buffer, 0, e.BytesTransferred);

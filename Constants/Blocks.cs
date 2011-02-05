@@ -161,7 +161,7 @@ namespace CXMineServer
 		LitPumpkin = 91
 	}
 	
-	public enum Item
+	public enum ItemType
 	{
 		IronShovel = 256,
 		IronPick = 257,
@@ -260,7 +260,7 @@ namespace CXMineServer
 		CookedFish = 350
 	}
 	
-	public enum Record
+	public enum RecordType
 	{
 		Gold = 2256,
 		Green = 2257

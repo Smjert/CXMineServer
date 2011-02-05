@@ -67,6 +67,7 @@
     <Compile Include="Constants\Color.cs" />
     <Compile Include="Constants\PacketsInfo.cs" />
     <Compile Include="Constants\Ranks.cs" />
+    <Compile Include="Item.cs" />
     <Compile Include="Network\BufferPool.cs" />
     <Compile Include="Network\ByteQueue.cs" />
     <Compile Include="Network\Listener.cs" />
@@ -88,6 +89,7 @@
     <Compile Include="Chunk.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Entities\Entity.cs" />
+    <Compile Include="Utils\Utility.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.IO;
 using System.IO.Compression;
 using NBT;
+using CXMineServer.Utils;
 
 namespace CXMineServer
 {
@@ -343,7 +344,7 @@ namespace CXMineServer
 			{
 				List<Chunk> newVisibleChunks = new List<Chunk>();
 
-				newVisibleChunks.AddRange(CXMineServer.Server.World.GetChunksInRange(newChunk));
+				newVisibleChunks.AddRange(CXMineServer.Server.World.GetChunksInVisibilityRange(newChunk));
 
 				foreach (Chunk c in VisibleChunks)
 				{
@@ -385,6 +386,8 @@ namespace CXMineServer
 			}
 			VisibleEntities = newVisibleEntities;
 
+			FindPickupObjects(newChunk);
+
 			CalculateTime();
 
 			if (_UpdateTimer.Running)
@@ -395,6 +398,46 @@ namespace CXMineServer
 			CXMineServer.SendLogFile(DateTime.Now + " Update");
 
 			base.Update();
+		}
+
+		public void FindPickupObjects(Chunk newChunk)
+		{
+			List<Item> toRemove = new List<Item>();
+
+			foreach (Chunk c in CXMineServer.Server.World.GetChunksInRange(newChunk, 1))
+			{
+				foreach (Item i in c.Items)
+				{
+					if (Utility.IsInRange(this, i, 40) && CanPick(i))
+					{
+						State.CollectItem(i.EId, EntityID, (short)i.Type);
+						toRemove.Add(i);
+					}
+				}
+			}
+
+			for (int i = 0; i < toRemove.Count; ++i)
+				toRemove[i].Delete();
+
+			toRemove.Clear();
+		}
+
+		public bool CanPick(Item i)
+		{
+			int pY = (int)(Y * 32.0);
+			if ((pY - 51) > i.Y)
+				return (pY - 51) - i.Y <= 16;
+			else
+				return i.Y - pY <= 16;
+		}
+
+		public bool CanPick(int itemY)
+		{
+			int pY = (int)(Y * 32.0);
+			if ((pY - 51) > itemY)
+				return (pY - 51) - itemY <= 16;
+			else
+				return itemY - pY <= 16;
 		}
 
 		private void CalculateTime()
@@ -444,7 +487,7 @@ namespace CXMineServer
 		public class UpdateTimer : Timer
 		{
 			private Player _Player;
-			public UpdateTimer(Player player) : base(TimeSpan.FromSeconds(2.0), true)
+			public UpdateTimer(Player player) : base(TimeSpan.FromSeconds(1.0), true)
 			{
 				_Player = player;
 			}
@@ -456,5 +499,21 @@ namespace CXMineServer
 				base.OnTick();
 			}
 		}
+
+		/*public class PickObjects : Timer
+		{
+			private Player _Player;
+			public PickObjects(Player player) : base(TimeSpan.FromSeconds(0.5), true)
+			{
+				_Player = player;
+			}
+
+			protected override void OnTick()
+			{
+				_Player.FindPickupObjects();
+
+				base.OnTick();
+			}
+		}*/
 	}
 }

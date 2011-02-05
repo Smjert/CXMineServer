@@ -16,7 +16,7 @@ namespace CXMineServer
 		private Dictionary<long, Chunk> _Chunks = new Dictionary<long, Chunk>();
 		private BinaryTag _Structure;
 
-      public const int visibleChunks = 6;
+		public const int visibleChunks = 8;
 		
 		public Map(string name)
 		{
@@ -86,11 +86,24 @@ namespace CXMineServer
 			//return GetChunk((int)(blockX / 16) - (blockX < 0 ? 1 : 0), (int)(blockZ / 16) - (blockZ < 0 ? 1 : 0));
 			return GetChunk(blockX >> 4, blockZ >> 4);
 		}
-		
-		public IEnumerable<Chunk> GetChunksInRange(Chunk c)
+
+		public IEnumerable<Chunk> GetChunksInVisibilityRange(Chunk c)
 		{
-			for (int x = c.ChunkX - visibleChunks; x <= c.ChunkX + visibleChunks; ++x) {
-				for (int z = c.ChunkZ - visibleChunks; z <= c.ChunkZ + visibleChunks; ++z) {
+			for (int x = c.ChunkX - visibleChunks; x <= c.ChunkX + visibleChunks; ++x)
+			{
+				for (int z = c.ChunkZ - visibleChunks; z <= c.ChunkZ + visibleChunks; ++z)
+				{
+					yield return GetChunk(x, z);
+				}
+			}
+		}
+
+		public IEnumerable<Chunk> GetChunksInRange(Chunk c, int range)
+		{
+			for (int x = c.ChunkX - range; x <= c.ChunkX + range; ++x)
+			{
+				for (int z = c.ChunkZ - range; z <= c.ChunkZ + range; ++z)
+				{
 					yield return GetChunk(x, z);
 				}
 			}

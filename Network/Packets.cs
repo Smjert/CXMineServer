@@ -17,6 +17,16 @@ namespace CXMineServer
 		}
 	}
 
+	public class CollectItem : Packet
+	{
+		public CollectItem(int itemEId, int playerEId)
+			: base(PacketType.CollectItem, 9)
+		{
+			_Writer.Write(itemEId);
+			_Writer.Write(playerEId);
+		}
+	}
+
 	public class DestroyEntity : Packet
 	{
 		public DestroyEntity(int entityId) : base(PacketType.DestroyEntity, 5)
@@ -103,10 +113,22 @@ namespace CXMineServer
 		}
 	}
 
-	/*public class PickupSpawn : Packet
+	public class PickupSpawn : Packet
 	{
-		public PickupSpawn(PacketType.)
-	}*/
+		public PickupSpawn(int eid, short block, byte count, short damage, int x, int y, int z, byte rotation, byte pitch, byte roll) : base(PacketType.PickupSpawn, 25)
+		{
+			_Writer.Write(eid);
+			_Writer.Write(block);
+			_Writer.Write(count);
+			_Writer.Write(damage);
+			_Writer.Write(x);
+			_Writer.Write(y);
+			_Writer.Write(z);
+			_Writer.Write(rotation);
+			_Writer.Write(pitch);
+			_Writer.Write(roll);
+		}
+	}
 
 	public class PlayerPositionLook : Packet
 	{
