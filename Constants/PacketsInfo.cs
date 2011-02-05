@@ -76,7 +76,7 @@ namespace CXMineServer
 			"bt",				// handshake
 			"bt",				// chat message
 			"bl",				// time update
-			"biss",				// player inventory
+			"bisss",				// player inventory
 			"biii",				// spawn position
 			"biib",				// interact entity
 			"bs",				// update health
@@ -127,7 +127,7 @@ namespace CXMineServer
             "bbbtb",            // open window
             "bb",               // close window
             "bbsbssbb",         // window click
-            "bbssbb",           // set slot
+            "bbssbs",           // set slot
             "bbsx",             // window item
             "bbss",             // update progress bar
             "bbsb",             // transaction

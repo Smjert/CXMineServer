@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>CXMineServer</RootNamespace>
     <AssemblyName>CXMineServer</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -63,18 +63,31 @@
     <Compile Include="CXMineServer.cs" />
     <Compile Include="Constants\Blocks.cs" />
     <Compile Include="Constants\Color.cs" />
-    <Compile Include="Constants\Packets.cs" />
+    <Compile Include="Constants\PacketsInfo.cs" />
     <Compile Include="Constants\Ranks.cs" />
-    <Compile Include="NetState.cs" />
-    <Compile Include="Packet.cs" />
+    <Compile Include="Item.cs" />
+    <Compile Include="Network\BufferPool.cs" />
+    <Compile Include="Network\ByteQueue.cs" />
+    <Compile Include="Network\Listener.cs" />
+    <Compile Include="Network\NetState.cs" />
+    <Compile Include="Network\Packet.cs" />
+    <Compile Include="Network\PacketHandler.cs" />
+    <Compile Include="Network\PacketHandlers.cs" />
+    <Compile Include="Network\PacketReader.cs" />
+    <Compile Include="Network\Packets.cs" />
+    <Compile Include="Network\PacketWriter.cs" />
+    <Compile Include="Network\SendQueue.cs" />
+    <Compile Include="Network\SocketAsyncEventArgsPool.cs" />
+    <Compile Include="Timer.cs" />
+    <Compile Include="TimerThread.cs" />
     <Compile Include="Utils\Configuration.cs" />
     <Compile Include="Utils\NBT.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="Chunk.cs" />
-    <Compile Include="Connection.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Entities\Entity.cs" />
+    <Compile Include="Utils\Utility.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

@@ -12,6 +12,10 @@ namespace CXMineServer
 		//TODO: a che serve?
 		//private static Random Random;
 		public static Server Server;
+
+		private static StreamWriter receiveFile;
+		private static StreamWriter sendFile;
+		private static StreamWriter errorFile;
 		
 		public static void Main(string[] args)
 		{
@@ -27,20 +31,63 @@ namespace CXMineServer
 			
 			Server = new Server();
 			try {
+				receiveFile = new StreamWriter("receive.txt");
+				sendFile = new StreamWriter("send.txt");
 				Server.Run();
 			}
 			catch (Exception e) {
 				Log("Fatal uncaught exception: " + e);
+				ErrorLog("Fatal uncaught exception: " + e);
+				Console.ReadLine();
 			}
-			
-			Log("Bye!");
+			receiveFile.Close();
+			receiveFile.Dispose();
+			receiveFile = null;
 
+			sendFile.Close();
+			sendFile.Dispose();
+			sendFile = null;
+
+			Log("Bye!");
 			Console.ReadLine();
+		}
+
+		public static void ErrorLog(string message)
+		{
+			if (errorFile == null)
+				errorFile = new StreamWriter("error.txt");
+
+			errorFile.Write(message);
+
+			errorFile.Flush();
 		}
 		
 		public static void Log(string message)
 		{
 			Console.WriteLine(FormatTime() + "    " + message);
+		}
+
+		public static void ReceiveLogFile(string message)
+		{
+			lock(receiveFile)
+			{
+				if (receiveFile == null)
+					receiveFile = new StreamWriter("receive.txt");
+
+				receiveFile.Write(message);
+
+				receiveFile.Flush();
+			}
+		}
+
+		public static void SendLogFile(string message)
+		{
+			if (sendFile == null)
+				sendFile = new StreamWriter("send.txt");
+
+			sendFile.Write(message);
+
+			sendFile.Flush();
 		}
 		
 		public static string FormatTime()
