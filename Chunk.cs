@@ -273,32 +273,39 @@ namespace CXMineServer
 
 		public byte GetData(int x, int y, int z)
 		{
-			return ((byte[])(_Structure["Level"]["Data"].Payload))[BlockIndex(x, y, z)];
+			int index = BlockIndex(x, y, z) / 2;
+
+			return ((byte[])(_Structure["Level"]["Data"].Payload))[index];
 		}
 
 		public void SetData(int x, int y, int z, byte data)
 		{
-			((byte[])(_Structure["Level"]["Data"].Payload))[BlockIndex(x, y, z)] = data;
+			int index = BlockIndex(x, y, z) / 2;
+			((byte[])(_Structure["Level"]["Data"].Payload))[index] = data;
 		}
 
 		public byte GetLight(int x, int y, int z)
 		{
-			return ((byte[])(_Structure["Level"]["BlockLight"].Payload))[BlockIndex(x, y, z)];
+			int index = BlockIndex(x, y, z) / 2;
+			return ((byte[])(_Structure["Level"]["BlockLight"].Payload))[index];
 		}
 
 		public void SetLight(int x, int y, int z, byte data)
 		{
-			((byte[])(_Structure["Level"]["BlockLight"].Payload))[BlockIndex(x, y, z)] = data;
+			int index = BlockIndex(x, y, z) / 2;
+			((byte[])(_Structure["Level"]["BlockLight"].Payload))[index] = data;
 		}
 
 		public byte GetSkyLight(int x, int y, int z)
 		{
-			return ((byte[])(_Structure["Level"]["SkyLight"].Payload))[BlockIndex(x, y, z)];
+			int index = BlockIndex(x, y, z) / 2;
+			return ((byte[])(_Structure["Level"]["SkyLight"].Payload))[index];
 		}
 
 		public void SetSkyLight(int x, int y, int z, byte data)
 		{
-			((byte[])(_Structure["Level"]["SkyLight"].Payload))[BlockIndex(x, y, z)] = data;
+			int index = BlockIndex(x, y, z) / 2;
+			((byte[])(_Structure["Level"]["SkyLight"].Payload))[index] = data;
 		}
 
 		public static void PlaceBlock(NetState from, int id, int x, int y, int z, int direction)
@@ -347,18 +354,24 @@ namespace CXMineServer
 
 			int _x = x & 15, _z = z & 15;
 
-			// Special handling for torches (TODO: Handle every object, check the placement)
-			if (id == (int)BlockType.Torch && direction == 0)
+			if (!Utility.IsInRange(from.Owner, x*32+16, z*32+16, 128) || !from.Owner.CanPlace(y) || (id == (int)BlockType.Torch && direction == 0))
 			{
+				// No need to rollback, no block exist here
+				if(y > 127 || y < -128)
+					return;
 				// Rollback to the precedent situation if the placement is invalid
 				BlockType block = CXMineServer.Server.World.GetChunkAt(x, z).GetBlock(_x, y, _z);
 				byte data = (byte)MetaHtN((int)CXMineServer.Server.World.GetChunkAt(x, z).GetData(_x, y, _z));
 				from.BlockChange(x, (byte)y, z, (byte)block, data);
+
+				Inventory.Slot slot = from.Owner.inventory.GetItem(from.Owner.inventory.HoldingPos + 36);
+				from.SetSlot(0, (short)slot.Position, slot.Id, (byte)slot.Count, slot.Uses);
 				return;
 			}
 
 			// Get the current chunk
 			Chunk chunk = CXMineServer.Server.World.GetChunkAt(x, z);
+			from.BlockChange(x, (byte)y, z, (byte)id, (byte)meta);
 			// For each player using that chunk, update the block data
 			foreach (Player p in CXMineServer.Server.PlayerList)
 			{
@@ -373,10 +386,18 @@ namespace CXMineServer
 			}
 
 			// Update the chunk's data on the server
-			chunk.SetBlock(_x, y, _z, (BlockType)id);
+			try
+			{
+				chunk.SetBlock(_x, y, _z, (BlockType)id);
+			}
+			catch (System.Exception ex)
+			{
+				CXMineServer.Log("Exception: " + ex.Message + "\n\nXYZ: " + _x + " " + y + " " + _z);
+			}
+			
 			// Decrement the inventory counter
 			int pos = from.Owner.inventory.HoldingPos;
-			from.Owner.inventory.Remove(pos);
+			from.Owner.inventory.Remove(pos + 36);
 
 			// Handle Count == 0 and so ID == -1 (Needed by the different packet format)
 			if (from.Owner.inventory.GetItem(pos).Id == -1)
@@ -446,9 +467,9 @@ namespace CXMineServer
 			Item newItem = null;
 
 			if (picksUp != null)
-				picksUp.State.CollectItem(eid, picksUp.EntityID, (short)block);
+				picksUp.State.CollectItem(eid, picksUp.EntityID, (short)block, 0);
 			else if (prevDistance <= 1600 && from.Owner.CanPick(itemY))
-				from.CollectItem(eid, from.Owner.EntityID, (short)block);
+				from.CollectItem(eid, from.Owner.EntityID, (short)block, 0);
 			else
 			{
 				newItem = new Item(chunk);
@@ -459,6 +480,7 @@ namespace CXMineServer
 				newItem.Yaw = 0.0f;
 				newItem.Pitch = 0.0f;
 				newItem.EId = eid;
+				newItem.Uses = 1;
 
 				chunk.Items.Add(newItem);
 			}

@@ -9,10 +9,18 @@ namespace CXMineServer.Utils
 	{
 		public static bool IsInRange(Player p, Item i, int range)
 		{
-			int fromX = (int)p.X * 32;
-			int fromZ = (int)p.Z * 32;
+			int fromX = (int)(p.X * 32.0);
+			int fromZ = (int)(p.Z * 32.0);
 
 			return IsInRange(fromX, fromZ, i.X, i.Z, range);
+		}
+
+		public static bool IsInRange(Player p, int toX, int toZ, int range)
+		{
+			int fromX = (int)(p.X * 32.0);
+			int fromZ = (int)(p.Z * 32.0);
+
+			return IsInRange(fromX, fromZ, toX, toZ, range);
 		}
 
 		public static bool IsInRange(int fX, int fZ, int tX, int tZ, int range)
@@ -25,8 +33,8 @@ namespace CXMineServer.Utils
 
 		public static bool IsInRange(Player p, Item i, int range, out int distance)
 		{
-			int fromX = (int)p.X * 32;
-			int fromZ = (int)p.Z * 32;
+			int fromX = (int)(p.X * 32.0);
+			int fromZ = (int)(p.Z * 32.0);
 
 			return IsInRange(fromX, fromZ, i.X, i.Z, range, out distance);
 		}
@@ -44,7 +52,7 @@ namespace CXMineServer.Utils
 			int distanceX = Math.Abs(tX - fX);
 			int distanceZ = Math.Abs(tZ - fZ);
 
-			distance = distanceX + distanceZ;
+			distance = distanceX * distanceX + distanceZ * distanceZ;
 
 			return (fX >= (tX - range))
 				&& (fX <= (tX + range))

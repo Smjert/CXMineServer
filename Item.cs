@@ -13,7 +13,14 @@ namespace CXMineServer
 			get { return _ParentChunk; }
 			set { _ParentChunk = value;}
 		}
+
 		public int Type
+		{
+			get;
+			set;
+		}
+
+		public int Uses
 		{
 			get;
 			set;

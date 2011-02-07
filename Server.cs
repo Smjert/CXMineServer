@@ -157,7 +157,6 @@ namespace CXMineServer
 			
 			while (_Signal.WaitOne()) {
 
-				CXMineServer.ReceiveLogFile("Loop");
 				lock (queue)
 				{
 					Queue<NetState> tmp = currentQueue;
@@ -165,7 +164,7 @@ namespace CXMineServer
 					queue = tmp;
 				}
 
-				for (int i = 0; i < currentQueue.Count; ++i)
+				while(currentQueue.Count > 0)
 				{
 					NetState ns = currentQueue.Dequeue();
 					ByteQueue buffer = ns.Buffer;
@@ -219,18 +218,18 @@ namespace CXMineServer
 									{
 										buffer.Dequeue(data, 0, packetReader.Index);
 										CXMineServer.ReceiveLogFile("Dequeued: " + packetReader.Index + " ");
-										CXMineServer.ReceiveLogFile("Complete \r\n");
+										CXMineServer.ReceiveLogFile("Complete \r\n\r\n");
 										length = buffer.Length;
 									}
 									else
 									{
-										CXMineServer.ReceiveLogFile("Packet not complete \r\n");
+										CXMineServer.ReceiveLogFile("Packet not complete \r\n\r\n");
 										length = 0;
 									}
 								}
 								else
 								{
-									CXMineServer.ReceiveLogFile("Not enough data \r\n");
+									CXMineServer.ReceiveLogFile("Not enough data \r\n\r\n");
 									length = 0;
 								}
 
@@ -246,16 +245,22 @@ namespace CXMineServer
 								if (packetReader.Failed)
 									ns.Disconnect();
 
-								CXMineServer.ReceiveLogFile("Complete \r\n");
+								CXMineServer.ReceiveLogFile("Complete \r\n\r\n");
 
 								length = buffer.Length;
 							}
 							else
 							{
-								CXMineServer.ReceiveLogFile("Not enough data \r\n");
+								CXMineServer.ReceiveLogFile("Not enough data \r\n\r\n");
 								length = 0;
 							}
 						}
+					}
+
+					if(ns.Owner.Moved)
+					{
+						ns.Owner.FindPickupObjects(CXMineServer.Server.World.GetChunkAt((int)ns.Owner.X, (int)ns.Owner.Z));
+						ns.Owner.Moved = false;
 					}
 				}
 
@@ -283,7 +288,7 @@ namespace CXMineServer
 		{
 			MessageAll(Color.Announce + player.Username + " has left");
 			CXMineServer.Log(player.Username + " has left");
-            playerList.Remove(player);
+      playerList.Remove(player);
 		}
 		
 		public void MessageAll(string message)

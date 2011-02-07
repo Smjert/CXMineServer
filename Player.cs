@@ -216,7 +216,12 @@ namespace CXMineServer
 		public string Username = "";
 		public bool Spawned;
 
-		
+		private bool _Moved;
+		public bool Moved
+		{
+			get { return _Moved; }
+			set { _Moved = value;}
+		}
 
 		private List<Chunk> visibleChunks = new List<Chunk>();
 		public IEnumerable<Chunk> VisibleChunks
@@ -271,6 +276,11 @@ namespace CXMineServer
 			CXMineServer.Server.Despawn(this);
 			Spawned = false;
 			CurrentChunk = null;
+
+			foreach (Player p in CXMineServer.Server.PlayerList)
+			{
+				p.State.DestroyEntity(EntityID);
+			}
 		}
 
 		private void loadPlayerData()
@@ -386,8 +396,6 @@ namespace CXMineServer
 			}
 			VisibleEntities = newVisibleEntities;
 
-			FindPickupObjects(newChunk);
-
 			CalculateTime();
 
 			if (_UpdateTimer.Running)
@@ -408,11 +416,14 @@ namespace CXMineServer
 			{
 				foreach (Item i in c.Items)
 				{
-					if (Utility.IsInRange(this, i, 40) && CanPick(i))
+					int distance;
+					if (Utility.IsInRange(this, i, 40, out distance) && CanPick(i))
 					{
-						State.CollectItem(i.EId, EntityID, (short)i.Type);
+						State.CollectItem(i.EId, EntityID, (short)i.Type, (short)i.Uses);
 						toRemove.Add(i);
 					}
+
+					//CXMineServer.Log("Item distance: " + distance);
 				}
 			}
 
@@ -426,9 +437,15 @@ namespace CXMineServer
 		{
 			int pY = (int)(Y * 32.0);
 			if ((pY - 51) > i.Y)
-				return (pY - 51) - i.Y <= 16;
+			{
+				int distance = (pY - 51) - i.Y;
+				return distance <= 16;
+			}
 			else
-				return i.Y - pY <= 16;
+			{
+				int distance = i.Y - pY;
+				return distance <= 16;
+			}
 		}
 
 		public bool CanPick(int itemY)
@@ -438,6 +455,16 @@ namespace CXMineServer
 				return (pY - 51) - itemY <= 16;
 			else
 				return itemY - pY <= 16;
+		}
+
+		public bool CanPlace(int itemY)
+		{
+			int pY = (int)(Y * 32.0);
+
+			if ((pY - 51) > itemY)
+				return (pY - 51) - itemY <= 112;
+			else
+				return itemY - pY <= 128;
 		}
 
 		private void CalculateTime()
@@ -456,6 +483,8 @@ namespace CXMineServer
 		{
 			// If this function doesn't work on itself... then it must be static or put out of here
 			if (e == this) return;
+
+			base.Remove();
 			_State.DestroyEntity(e.EntityID);
 		}
 
@@ -479,7 +508,13 @@ namespace CXMineServer
 			}
 		}
 
-		override public string ToString()
+		public override void Remove()
+		{
+			_UpdateTimer.Stop();
+			base.Remove();
+		}
+
+		public override string ToString()
 		{
 			return "[Entity.Player " + EntityID + ": " + Username + "]";
 		}

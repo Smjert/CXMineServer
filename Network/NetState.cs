@@ -57,7 +57,7 @@ namespace CXMineServer
 			//_Owner = player;
 		}
 
-		public void CollectItem(int itemEId, int playerEId, short block)
+		public void CollectItem(int itemEId, int playerEId, short block, short damage)
 		{
 			Send(new CollectItem(itemEId, playerEId));
 			foreach (Player p in CXMineServer.Server.PlayerList)
@@ -66,7 +66,7 @@ namespace CXMineServer
 			}
 
 			short slot = (short)Owner.inventory.Add(block);
-			Send(new SetSlotAdd(0, slot, block, (byte)Owner.inventory.GetItem(slot).Count, 0));
+			Send(new SetSlotAdd(0, slot, block, (byte)Owner.inventory.GetItem(slot).Count, damage));
 		}
 
 		public void BlockChange(int x, byte y, int z, byte id, byte metadata)
@@ -133,10 +133,10 @@ namespace CXMineServer
 			Send(new PreChunk(chunkX, chunkZ, extra));
 		}
 
-		public void SetSlot(byte extra, short slot, short idPayload, byte countPayload, short damage)
+		public void SetSlot(byte windowId, short slot, short idPayload, byte countPayload, short damage)
 		{
 			CXMineServer.SendLogFile("Sending: SetSlotAdd" + "\r\n");
-			Send(new SetSlotAdd(extra, slot, idPayload, countPayload, damage));
+			Send(new SetSlotAdd(windowId, slot, idPayload, countPayload, damage));
 		}
 
 		public void SetSlot(byte extra, short slot, short idPayload)
@@ -281,6 +281,9 @@ namespace CXMineServer
 
 		public void Receive_Start()
 		{
+			if(_Disposing)
+				return;
+
 			try
 			{
 				bool willRaiseEvent = false;
@@ -397,6 +400,9 @@ namespace CXMineServer
 
 			lock (_Buffer)
 				_Buffer.Clear();
+
+			Owner.Remove();
+			Owner.Despawn();
 		}
 	}
 

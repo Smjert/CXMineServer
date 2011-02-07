@@ -156,9 +156,9 @@ namespace CXMineServer
 
 	public class SetSlotAdd : Packet
 	{
-		public SetSlotAdd(byte extra, short slot, short idPayload, byte countPayload, short damage) : base(PacketType.SetSlot, 9)
+		public SetSlotAdd(byte windowId, short slot, short idPayload, byte countPayload, short damage) : base(PacketType.SetSlot, 9)
 		{
-			_Writer.Write(extra);
+			_Writer.Write(windowId);
 			_Writer.Write(slot);
 			_Writer.Write(idPayload);
 			_Writer.Write(countPayload);

@@ -47,9 +47,10 @@ namespace CXMineServer
 			}
 		}
 		
-		public void Remove()
+		public virtual void Remove()
 		{
-			if (CurrentChunk != null) CurrentChunk.Entities.Remove(this);
+			if (CurrentChunk != null)
+				CurrentChunk.Entities.Remove(this);
 		}
 		
 		override public string ToString()

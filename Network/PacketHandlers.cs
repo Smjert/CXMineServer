@@ -247,6 +247,8 @@ namespace CXMineServer
 			ns.Owner.Z = z;
 
 			bool onGround = packetReader.ReadBool();
+
+			ns.Owner.Moved = true;
 		}
 
 		public static void ReadPlayerLook(NetState ns, PacketReader packetReader)
@@ -277,6 +279,8 @@ namespace CXMineServer
 			ns.Owner.Z = z;
 
 			bool onGround = packetReader.ReadBool();
+
+			ns.Owner.Moved = true;
 		}
 	}
 }
