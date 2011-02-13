@@ -467,9 +467,9 @@ namespace CXMineServer
 			Item newItem = null;
 
 			if (picksUp != null)
-				picksUp.State.CollectItem(eid, picksUp.EntityID, (short)block, 0);
+				picksUp.State.CollectItem(eid, picksUp.EntityID, (short)block, 1, 0);
 			else if (prevDistance <= 1600 && from.Owner.CanPick(itemY))
-				from.CollectItem(eid, from.Owner.EntityID, (short)block, 0);
+				from.CollectItem(eid, from.Owner.EntityID, (short)block, 1, 0);
 			else
 			{
 				newItem = new Item(chunk);
@@ -480,7 +480,8 @@ namespace CXMineServer
 				newItem.Yaw = 0.0f;
 				newItem.Pitch = 0.0f;
 				newItem.EId = eid;
-				newItem.Uses = 1;
+				newItem.Uses = 0;
+				newItem.Count = 1;
 
 				chunk.Items.Add(newItem);
 			}

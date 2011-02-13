@@ -57,7 +57,7 @@ namespace CXMineServer
 			//_Owner = player;
 		}
 
-		public void CollectItem(int itemEId, int playerEId, short block, short damage)
+		public void CollectItem(int itemEId, int playerEId, short block, byte count, short damage)
 		{
 			Send(new CollectItem(itemEId, playerEId));
 			foreach (Player p in CXMineServer.Server.PlayerList)
@@ -65,7 +65,7 @@ namespace CXMineServer
 				p.State.DestroyEntity(itemEId);
 			}
 
-			short slot = (short)Owner.inventory.Add(block);
+			short slot = (short)Owner.inventory.Add(block, true);
 			Send(new SetSlotAdd(0, slot, block, (byte)Owner.inventory.GetItem(slot).Count, damage));
 		}
 
@@ -171,6 +171,11 @@ namespace CXMineServer
 		public void TimeUpdate(long time)
 		{
 			Send(new TimeUpdate(time));
+		}
+
+		public void Transaction(byte windowId, short actionNumber, bool accepted)
+		{
+			Send(new Transaction(windowId, actionNumber, accepted));
 		}
 
 		// Something better than object?

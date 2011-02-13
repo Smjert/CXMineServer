@@ -76,6 +76,10 @@ namespace CXMineServer
 			}
 		}
 
+		public void Write(bool value)
+		{
+			_Stream.WriteByte(Convert.ToByte(value));
+		}
 		public void Write(byte value)
 		{
 			_Stream.WriteByte(value);

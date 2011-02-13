@@ -194,6 +194,16 @@ namespace CXMineServer
 		}
 	}
 
+	public class Transaction : Packet
+	{
+		public Transaction(byte windowId, short actionNumber, bool accepted) : base(PacketType.Transaction, 5)
+		{
+			_Writer.Write(windowId);
+			_Writer.Write(actionNumber);
+			_Writer.Write(accepted);
+		}
+	}
+
 	public class UpdateHealth : Packet
 	{
 		public UpdateHealth(short health) : base(PacketType.UpdateHealth, 3)

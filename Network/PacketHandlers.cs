@@ -53,6 +53,8 @@ namespace CXMineServer
 			Register(PacketType.PlayerPosition, 34, 0, new OnPacketReceive(ReadPlayerPosition));
 			Register(PacketType.PlayerPositionLook, 42, 0, new OnPacketReceive(ReadPlayerPositionLook));
 			Register(PacketType.PlayerLook, 10, 0, new OnPacketReceive(ReadPlayerLook));
+			Register(PacketType.WindowClick, 0, 9, new OnPacketReceive(ReadWindowClick));
+			Register(PacketType.CloseWindow, 2, 0, new OnPacketReceive(ReadCloseWindow));
 		}
 
 		public static void Register(PacketType packetID, int length, int minimumLength, OnPacketReceive onReceive)
@@ -71,6 +73,11 @@ namespace CXMineServer
 			byte animation = packetReader.ReadByte();
 
 			// Send this to near players
+		}
+
+		public static void ReadCloseWindow(NetState ns, PacketReader packetReader)
+		{
+			byte id = packetReader.ReadByte();
 		}
 
 		public static void ReadDisconnect(NetState ns, PacketReader packetReader)
@@ -281,6 +288,92 @@ namespace CXMineServer
 			bool onGround = packetReader.ReadBool();
 
 			ns.Owner.Moved = true;
+		}
+
+		public static void ReadWindowClick(NetState ns, PacketReader packetReader)
+		{
+			byte windowId = packetReader.ReadByte();
+			short slot = packetReader.ReadInt16();
+			bool rightClick = packetReader.ReadBool();
+			short actionNumber = packetReader.ReadInt16();
+			short itemId = packetReader.ReadInt16();
+
+			if(itemId != -1)
+			{
+				byte itemCount = 0;
+				short itemUses = 0;
+				if (packetReader.Index + 3 <= packetReader.Size)
+				{
+					itemCount = packetReader.ReadByte();
+					itemUses = packetReader.ReadInt16();
+				}
+				else
+				{
+					packetReader.Failed = true;
+					return;
+				}
+
+				// We need security controls, like controlling if we own the item, if the count and uses is correct or not, for now we say it's always ok
+				ns.Transaction(windowId, actionNumber, true);
+
+				if(windowId == 0)
+				{
+					if(rightClick)
+					{
+						if(ns.Owner.MouseHoldingItem == null)
+						{
+							Inventory.Slot item = ns.Owner.inventory.GetItem(slot);
+							int prevCount = ns.Owner.inventory.GetItem(slot).Count;
+							int newCount = ns.Owner.inventory.GetItem(slot).Count = (short)(ns.Owner.inventory.GetItem(slot).Count > 1 ? ns.Owner.inventory.GetItem(slot).Count / 2 : 1);
+
+							ns.Owner.MouseHoldingItem = new Item();
+							ns.Owner.MouseHoldingItem.Count = prevCount - newCount;
+							ns.Owner.MouseHoldingItem.Uses = item.Uses;
+						}
+						else
+						{
+							Inventory.Slot item = ns.Owner.inventory.GetItem(slot);
+							if (item.Id == ns.Owner.MouseHoldingItem.Type && item.Count < 64)
+							{
+								++item.Count;
+								--ns.Owner.MouseHoldingItem.Count;
+							}
+						}
+					}
+					else
+					{
+						Inventory.Slot item = ns.Owner.inventory.GetItem(slot);
+
+						if(item == null)
+							ns.Owner.inventory.AddToPosition(slot, itemId, itemCount, itemUses, false);
+
+						else if(ns.Owner.MouseHoldingItem == null)
+						{
+							ns.Owner.MouseHoldingItem = new Item();
+							ns.Owner.MouseHoldingItem.Count = item.Count;
+							ns.Owner.MouseHoldingItem.Uses = item.Uses;
+
+							item.Count = 0;
+						}
+						else if (item.Count < 64)
+						{
+							int stillHolding = ns.Owner.MouseHoldingItem.Count - (64 - item.Count);
+
+							int added = ns.Owner.MouseHoldingItem.Count - stillHolding;
+
+							if (stillHolding == 0)
+								ns.Owner.MouseHoldingItem = null;
+
+							item.Count += (short)added;
+						}
+					}
+				}
+			}
+			else if(ns.Owner.MouseHoldingItem != null)
+			{
+				ns.Owner.inventory.AddToPosition(slot, (short)ns.Owner.MouseHoldingItem.Type, (short)ns.Owner.MouseHoldingItem.Count, (short)ns.Owner.MouseHoldingItem.Uses, false);
+				ns.Owner.MouseHoldingItem = null;
+			}
 		}
 	}
 }

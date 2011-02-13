@@ -31,10 +31,6 @@ namespace CXMineServer
 				set
 				{
 					count = value;
-					if (count > (short)64)
-					{
-						_Inventory.SplitStackForSlot(Position);
-					}
 					if (Id != (short)-1 && count == (short)0)
 					{
 						_Inventory.ResetSlot(Position);
@@ -92,19 +88,19 @@ namespace CXMineServer
 				slotList.Add(new Slot(this));
 		}
 
-		public int Add(short id)
+		public int Add(short id, bool split)
 		{
 			int slot = GetFirstAvailableSlotFor(id);
 
 			if (slot == -1)
 				return -1;
 
-			AddToPosition(slot, id, 1, 0);
+			AddToPosition(slot, id, 1, 0, split);
 
 			return slot;
 		}
 
-		public void AddToPosition(int position, short id, short count, short uses)
+		public void AddToPosition(int position, short id, short count, short uses, bool split)
 		{
 			if (slotList[position].Id == -1)
 			{
@@ -112,7 +108,11 @@ namespace CXMineServer
 				slotList[position] = new Slot(this, count, id, uses, position);
 			}
 			else
+			{
 				slotList[position].Count += 1;
+				if(split && count > 64)
+					SplitStackForSlot(position);
+			}
 		}
 
 		public void Remove(int position, int quantity = 1)
@@ -122,7 +122,8 @@ namespace CXMineServer
 
 		public void ResetSlot(int position)
 		{
-			slotList[position] = new Slot(this);
+			slotList[position].Id = -1;
+			slotList[position].Uses = 0;
 		}
 
 		public Slot GetItem(int position)
@@ -246,6 +247,12 @@ namespace CXMineServer
 
 		private Timer _UpdateTimer;
 
+		public Item MouseHoldingItem
+		{
+			get;
+			set;
+		}
+
 		public Player()
 		{
 			_UpdateTimer = new UpdateTimer(this);
@@ -314,7 +321,7 @@ namespace CXMineServer
 						short realSlot = Inventory.FileToGameSlot(slot);
 						inventory.AddToPosition(realSlot, (short)_inventory[i]["id"].Payload,
 																		(short)(byte)_inventory[i]["Count"].Payload,
-																		(short)_inventory[i]["Damage"].Payload);
+																		(short)_inventory[i]["Damage"].Payload, false);
 						// Converting from player's .dat inventory slot to game's inventory slot
 						_State.SetSlot(0, realSlot,
 													 (short)_inventory[i]["id"].Payload,
@@ -419,7 +426,7 @@ namespace CXMineServer
 					int distance;
 					if (Utility.IsInRange(this, i, 40, out distance) && CanPick(i))
 					{
-						State.CollectItem(i.EId, EntityID, (short)i.Type, (short)i.Uses);
+						State.CollectItem(i.EId, EntityID, (short)i.Type, (byte)i.Count, (short)i.Uses);
 						toRemove.Add(i);
 					}
 

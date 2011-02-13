@@ -26,6 +26,12 @@ namespace CXMineServer
 			set;
 		}
 
+		public int Count
+		{
+			get;
+			set;
+		}
+
 		public int EId
 		{
 			get;
@@ -60,6 +66,10 @@ namespace CXMineServer
 		public Item(Chunk c)
 		{
 			_ParentChunk = c;
+		}
+
+		public Item()
+		{
 		}
 
 		public void Delete()

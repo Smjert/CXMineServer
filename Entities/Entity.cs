@@ -36,7 +36,7 @@ namespace CXMineServer
 			EntityID = Server.getEID();
 		}
 		
-		virtual public void Update()
+		public virtual void Update()
 		{
 			Chunk oldChunk = CurrentChunk;
 			Chunk newChunk = CXMineServer.Server.World.GetChunkAt((int) X, (int) Z);
